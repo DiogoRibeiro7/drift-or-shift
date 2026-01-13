@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=60.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drift-or-shift"
+version = "0.1.0"
+description = "Reproduce insights on label shift and offset correction from ssrn-6052514."
+authors = [
+    { name = "DriftOrShift Team", email = "team@example.com" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "numpy",
+    "scikit-learn",
+    "pandas",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.mypy]
+files = "src"
+python_version = 3.10
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["drift_or_shift"]
