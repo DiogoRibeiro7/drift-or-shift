@@ -21,6 +21,7 @@ dependencies = [
     "scikit-learn",
     "pandas",
     "matplotlib",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,13 @@ dev = [
     "ruff",
     "mypy",
 ]
+
+[project.scripts]
+dos-exp1 = "drift_or_shift.experiments.exp1_label_shift_synth:main"
+dos-exp2 = "drift_or_shift.experiments.exp2_auc_pr_invariance:main"
+dos-exp3 = "drift_or_shift.experiments.exp3_ess_vs_weight:main"
+dos-exp4 = "drift_or_shift.experiments.exp4_concept_drift:main"
+dos-exp5 = "drift_or_shift.experiments.exp5_realdata_breast_cancer:main"
 
 [tool.ruff]
 line-length = 88
@@ -39,4 +47,4 @@ python_version = "3.10"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["drift_or_shift"]
+packages = ["drift_or_shift", "caliblab"]

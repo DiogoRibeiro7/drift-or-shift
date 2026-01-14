@@ -1,0 +1,27 @@
+dataset:
+  name: breast_cancer
+  max_samples: 500
+  random_state: 0
+estimators:
+  - name: logistic
+    type: logistic
+    params:
+      C: 1.0
+      max_iter: 1000
+      solver: liblinear
+calibration_methods:
+  - none
+  - sigmoid
+  - isotonic
+cv:
+  n_splits: 5
+  random_state: 0
+outputs:
+  raw: reproduce/results/raw
+  tables: reproduce/results/tables
+  figures: reproduce/results/figures
+figures:
+  reliability:
+    methods:
+      - logistic|none
+      - logistic|sigmoid
