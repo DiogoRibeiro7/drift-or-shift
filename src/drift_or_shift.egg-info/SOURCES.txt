@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+src/drift_or_shift/__init__.py
+src/drift_or_shift.egg-info/PKG-INFO
+src/drift_or_shift.egg-info/SOURCES.txt
+src/drift_or_shift.egg-info/dependency_links.txt
+src/drift_or_shift.egg-info/requires.txt
+src/drift_or_shift.egg-info/top_level.txt
