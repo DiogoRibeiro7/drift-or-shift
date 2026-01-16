@@ -1,4 +1,4 @@
-"""Experiment 5: Breast cancer dataset under label shift."""
+"""Experiment 9: label shift on the Covertype dataset."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_covtype
 
 from drift_or_shift import (
+    DEFAULT_COSTS,
     DRIFT_FEATURE_METRICS,
     ExperimentConfig,
     PI_TRAIN,
@@ -34,47 +34,57 @@ from drift_or_shift import (
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experiment 5: breast cancer label shift.")
+    parser = argparse.ArgumentParser(description="Run Exp9: Covertype label shift.")
+    parser.add_argument("--n-train", type=int, default=2000)
+    parser.add_argument("--n-test", type=int, default=2000)
     parser.add_argument("--pi-train", type=float, default=PI_TRAIN)
     parser.add_argument("--pi-tests", type=float, nargs="+", default=list(PI_TEST_GRID))
     parser.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
+    parser.add_argument("--c10", type=float, default=DEFAULT_COSTS["c10"])
+    parser.add_argument("--c01", type=float, default=DEFAULT_COSTS["c01"])
     parser.add_argument("--results-dir", type=Path, default="results")
     return parser.parse_args()
 
 
+def _load_covtype() -> tuple[np.ndarray, np.ndarray]:
+    data = fetch_covtype(download_if_missing=True)
+    X = data.data.astype(float)
+    y = (data.target == 1).astype(int)
+    return X, y
+
+
 def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
-    data = load_breast_cancer()
-    X_full = data.data
-    y_full = data.target
-    rows = []
+    X_full, y_full = _load_covtype()
+    rows: list[dict[str, float]] = []
+    required = config.n_train + config.n_test
     for seed in config.seeds:
-        X_train_full, X_test_full, y_train_full, y_test_full = train_test_split(
-            X_full,
-            y_full,
-            test_size=0.5,
-            stratify=y_full,
-            random_state=seed,
-        )
-        rng_train = np.random.default_rng(seed + 1)
+        rng = np.random.default_rng(seed)
+        if required > X_full.shape[0]:
+            raise ValueError("Covertype dataset does not contain enough samples for the requested N")
+        subset = rng.choice(X_full.shape[0], size=required, replace=False)
+        pool_X = X_full[subset]
+        pool_y = y_full[subset]
+        X_train_raw = pool_X[: config.n_train]
+        y_train_raw = pool_y[: config.n_train]
         X_train, y_train = resample_to_prevalence(
-            X_train_full, y_train_full, config.pi_train, rng_train
+            X_train_raw, y_train_raw, config.pi_train, rng
         )
-        model = fit_logistic_regression(X_train, y_train, rng=rng_train)
+        model = fit_logistic_regression(X_train, y_train, rng=rng)
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
 
         for pi_test in config.pi_tests:
-            rng_test = np.random.default_rng(seed + int(pi_test * 100))
-            X_test, y_test = resample_to_prevalence(
-                X_test_full, y_test_full, pi_test, rng_test
-            )
+            X_test_raw = pool_X[config.n_train :]
+            y_test_raw = pool_y[config.n_train :]
+            X_test, y_test = resample_to_prevalence(X_test_raw, y_test_raw, pi_test, rng)
             scores = predict_logits(model, X_test)
             decisions_none = (scores >= threshold).astype(int)
             risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
 
             offset = logit_offset(config.pi_train, pi_test)
-            shifted_scores = apply_logit_offset(scores, offset)
-            decisions_offset = (shifted_scores >= threshold).astype(int)
-            risk_offset = risk_cost_sensitive(y_test, decisions_offset, config.c10, config.c01)
+            scores_offset = apply_logit_offset(scores, offset)
+            risk_offset = risk_cost_sensitive(
+                y_test, (scores_offset >= threshold).astype(int), config.c10, config.c01
+            )
 
             _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
             drift = feature_drift_metrics(X_train, X_test)
@@ -129,15 +139,15 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
 def main() -> None:
     args = _parse_args()
     config = ExperimentConfig(
-        exp_name="exp5_realdata_breast_cancer",
-        n_train=0,
-        n_test=0,
-        d=0,
+        exp_name="exp9_covtype_label_shift",
+        n_train=args.n_train,
+        n_test=args.n_test,
+        d=54,
         pi_train=args.pi_train,
         pi_tests=args.pi_tests,
         seeds=args.seeds,
-        c10=1.0,
-        c01=1.0,
+        c10=args.c10,
+        c01=args.c01,
     )
     _run_experiment(config, args.results_dir)
 

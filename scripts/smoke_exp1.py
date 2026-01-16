@@ -1,4 +1,4 @@
-"""Experiment 5: Breast cancer dataset under label shift."""
+"""Lightweight smoke runner that replays Exp1 with minimal data."""
 
 from __future__ import annotations
 
@@ -7,24 +7,19 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
 
 from drift_or_shift import (
-    DRIFT_FEATURE_METRICS,
+    DEFAULT_COSTS,
     ExperimentConfig,
     PI_TRAIN,
-    PI_TEST_GRID,
-    SEEDS,
     aggregate_mean_std,
     apply_logit_offset,
-    feature_drift_metrics,
     fit_logistic_regression,
     logit_offset,
+    make_gaussian_binary,
     oracle_threshold_min_risk,
     plot_risk_vs_prevalence,
     predict_logits,
-    resample_to_prevalence,
     risk_cost_sensitive,
     save_json,
     save_table,
@@ -34,50 +29,39 @@ from drift_or_shift import (
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experiment 5: breast cancer label shift.")
-    parser.add_argument("--pi-train", type=float, default=PI_TRAIN)
-    parser.add_argument("--pi-tests", type=float, nargs="+", default=list(PI_TEST_GRID))
-    parser.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
+    parser = argparse.ArgumentParser(description="Quick smoke run of Exp1.")
     parser.add_argument("--results-dir", type=Path, default="results")
     return parser.parse_args()
 
 
-def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
-    data = load_breast_cancer()
-    X_full = data.data
-    y_full = data.target
+def _run_smoke(config: ExperimentConfig, results_dir: Path) -> None:
     rows = []
     for seed in config.seeds:
-        X_train_full, X_test_full, y_train_full, y_test_full = train_test_split(
-            X_full,
-            y_full,
-            test_size=0.5,
-            stratify=y_full,
-            random_state=seed,
-        )
-        rng_train = np.random.default_rng(seed + 1)
-        X_train, y_train = resample_to_prevalence(
-            X_train_full, y_train_full, config.pi_train, rng_train
+        rng_train = np.random.default_rng(seed)
+        mu0 = np.zeros(config.d)
+        mu1 = np.zeros(config.d)
+        mu1[: min(5, config.d)] = 1.0
+        X_train, y_train = make_gaussian_binary(
+            config.n_train, config.d, config.pi_train, mu0, mu1, sigma=1.0, rng=rng_train
         )
         model = fit_logistic_regression(X_train, y_train, rng=rng_train)
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
 
         for pi_test in config.pi_tests:
             rng_test = np.random.default_rng(seed + int(pi_test * 100))
-            X_test, y_test = resample_to_prevalence(
-                X_test_full, y_test_full, pi_test, rng_test
+            X_test, y_test = make_gaussian_binary(
+                config.n_test, config.d, pi_test, mu0, mu1, sigma=1.0, rng=rng_test
             )
             scores = predict_logits(model, X_test)
             decisions_none = (scores >= threshold).astype(int)
             risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
 
             offset = logit_offset(config.pi_train, pi_test)
-            shifted_scores = apply_logit_offset(scores, offset)
-            decisions_offset = (shifted_scores >= threshold).astype(int)
+            scores_offset = apply_logit_offset(scores, offset)
+            decisions_offset = (scores_offset >= threshold).astype(int)
             risk_offset = risk_cost_sensitive(y_test, decisions_offset, config.c10, config.c01)
 
             _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
-            drift = feature_drift_metrics(X_train, X_test)
             rows.append(
                 {
                     "seed": seed,
@@ -85,19 +69,13 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
                     "risk_none": risk_none,
                     "risk_offset": risk_offset,
                     "risk_oracle": risk_oracle,
-                    **drift,
                 }
             )
 
     df = pd.DataFrame(rows)
     summary = aggregate_mean_std(
         df,
-        metrics=(
-            "risk_none",
-            "risk_offset",
-            "risk_oracle",
-            *DRIFT_FEATURE_METRICS,
-        ),
+        metrics=("risk_none", "risk_offset", "risk_oracle"),
         groupby="pi_test",
     )
 
@@ -122,6 +100,7 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         "table": str(table_path),
         "figure": str(figure_path),
         "aggregated": summary.to_dict(orient="list"),
+        "notes": "Smoke run with smaller N and single seed.",
     }
     save_json(summary_data, summary_path)
 
@@ -129,17 +108,17 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
 def main() -> None:
     args = _parse_args()
     config = ExperimentConfig(
-        exp_name="exp5_realdata_breast_cancer",
-        n_train=0,
-        n_test=0,
-        d=0,
-        pi_train=args.pi_train,
-        pi_tests=args.pi_tests,
-        seeds=args.seeds,
-        c10=1.0,
-        c01=1.0,
+        exp_name="smoke_exp1",
+        n_train=200,
+        n_test=200,
+        d=3,
+        pi_train=PI_TRAIN,
+        pi_tests=[0.1, 0.5],
+        seeds=[0],
+        c10=DEFAULT_COSTS["c10"],
+        c01=DEFAULT_COSTS["c01"],
     )
-    _run_experiment(config, args.results_dir)
+    _run_smoke(config, args.results_dir)
 
 
 if __name__ == "__main__":

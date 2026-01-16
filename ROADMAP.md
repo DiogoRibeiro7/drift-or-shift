@@ -375,7 +375,7 @@ Acceptance criteria:
 
 ---
 
-## Milestone 13 — CI + quality gates (recommended)
+## Milestone 13 - CI + quality gates (recommended)
 ### Tasks
 - Add GitHub Actions workflow:
   - `ruff check`
@@ -384,6 +384,34 @@ Acceptance criteria:
 
 ### Acceptance criteria
 - CI passes on main branch.
+
+---
+
+## Milestone 14 - Result synthesis & write-up (complete)
+### Tasks
+ - [x] Document how each experiment validates the paper's claims and call out any deviations (`RESULTS_DIGEST.md`).
+ - [x] Generate a single "results digest" with metrics, artifact paths, and metadata (`RESULTS_DIGEST.md`).
+ - [x] Provide a narrative rerun guide plus commentary on the figures/tables (`REPORT.md`, `README.md` updates).
+ - [x] Capture surprising behaviors and hypotheses for follow-up (`notes/lessons.md`).
+
+### Acceptance criteria
+- A reader can explain what each artifact shows without rerunning experiments.
+- Narrative doc references the exact figure/table filenames produced under `results/`.
+- Lessons note lists at least three insights or hypotheses drawn from the experiments.
+
+---
+
+## Milestone 15 - Maintenance & ecosystem readiness (complete)
+### Tasks
+ - [x] Publish a release checklist covering version bumps, tests, reports, tagging (`RELEASE.md`, README maintenance section).
+ - [x] Keep packaging info and docs locked (no unused dependencies or extra keywords; README references release docs).
+ - [x] Add a smoke script plus test verifying it (`scripts/smoke_exp1.py`, `tests/test_smoke_exp1_script.py`).
+ - [x] Document future work & learning goals (`FUTURE.md`).
+
+### Acceptance criteria
+- Versioned release notes exist and a maintainers checklist (e.g., `make release`) captures verification steps.
+- A minimal sanity test script runs in under a minute and exits cleanly; document how to run it.
+- Future work appendix lists at least three concrete extensions and their expected learning goals.
 
 ---
 

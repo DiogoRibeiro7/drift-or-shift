@@ -1,0 +1,208 @@
+# Results overview
+
+## exp10_credit_card_fraud
+- timestamp: 2026-01-15T19:08:01.186466
+- table: results\exp10_credit_card_fraud\20260115_190800\tables\exp10_credit_card_fraud.csv
+- figure: results\exp10_credit_card_fraud\20260115_190800\figures\exp10_credit_card_fraud.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.0041, 0.0153, 0.0268, 0.056100000000000004, 0.13319999999999999]
+  - risk_none_std: [0.0027092434368288136, 0.014783774890061064, 0.024119701490690135, 0.052049399612291394, 0.12784506247798544]
+  - risk_offset_mean: [0.0033, 0.017300000000000003, 0.0258, 0.056100000000000004, 0.1139]
+  - risk_offset_std: [0.0025219040425836984, 0.015295751043999115, 0.024834653208772615, 0.052049399612291394, 0.12350360318630385]
+  - risk_oracle_mean: [0.0016, 0.0103, 0.016900000000000002, 0.0364, 0.08009999999999999]
+  - risk_oracle_std: [0.0022671568097509267, 0.01524663897388536, 0.025132449144482517, 0.05297678736956404, 0.1158690640335029]
+- raw summary path: results\exp10_credit_card_fraud\20260115_190800\exp10_credit_card_fraud_summary.json
+
+## exp11_high_variance_medical
+- timestamp: 2026-01-16T16:40:08.815833
+- table: results\exp11_high_variance_medical\20260116_164008\tables\exp11_high_variance_medical.csv
+- figure: results\exp11_high_variance_medical\20260116_164008\figures\exp11_high_variance_medical.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.10189999999999999, 0.10269999999999999, 0.10640000000000001, 0.1091, 0.11839999999999999]
+  - risk_none_std: [0.011968291440301744, 0.010200980345045275, 0.0092217135067188, 0.007611832893594025, 0.0063592452382338575]
+  - risk_offset_mean: [0.016499999999999997, 0.0494, 0.08049999999999999, 0.1091, 0.1332]
+  - risk_offset_std: [0.0024289915602982238, 0.0057043842787806625, 0.006678323142825599, 0.007611832893594025, 0.009532051195833977]
+  - risk_retrain_mean: [0.0092, 0.039, 0.0631, 0.0864, 0.1095]
+  - risk_retrain_std: [0.0012489995996796794, 0.004086563348340511, 0.0035270384177096803, 0.00711617874986288, 0.005787918451395114]
+  - feature_max_mean_diff_mean: [0.25163659277429934, 0.19284101921432656, 0.1431280337657331, 0.06460082699090082, 0.45287558816484025]
+  - feature_max_mean_diff_std: [0.02863739372934837, 0.015542624035855365, 0.034964915766698815, 0.014480489159274643, 0.011874618862161802]
+  - feature_max_std_diff_mean: [0.30587513705685276, 0.29384892719455297, 0.28634014777731637, 0.2925797541272495, 0.2709760051185911]
+  - feature_max_std_diff_std: [0.027954074737972325, 0.023082869751492215, 0.011433619221648705, 0.02428926921334287, 0.024888428174858115]
+  - feature_max_ks_mean: [0.1262, 0.11320000000000001, 0.10190000000000002, 0.10670000000000004, 0.23920000000000002]
+  - feature_max_ks_std: [0.005182663407939975, 0.006757218362610464, 0.009420191080864546, 0.00869252552484029, 0.005836094584565949]
+  - feature_mean_ks_mean: [0.10996666666666666, 0.10008333333333334, 0.08845, 0.08941666666666667, 0.20390000000000003]
+  - feature_mean_ks_std: [0.005017081931871469, 0.005298846834715812, 0.0024802553631968335, 0.004891034882539915, 0.004198677040317456]
+- raw summary path: results\exp11_high_variance_medical\20260116_164008\exp11_high_variance_medical_summary.json
+
+## exp1_label_shift_synth
+- timestamp: 2026-01-14T13:26:26.879652
+- table: results\exp1_label_shift_synth\20260114_132626\tables\exp1_label_shift_synth.csv
+- figure: results\exp1_label_shift_synth\20260114_132626\figures\exp1_label_shift_synth.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.046900000000000004, 0.055299999999999995, 0.072, 0.09230000000000001, 0.1699]
+  - risk_none_std: [0.004641120554348916, 0.004632493928760187, 0.004806245936279165, 0.005971599450733445, 0.0120639960212195]
+  - risk_offset_mean: [0.0084, 0.0313, 0.061399999999999996, 0.09230000000000001, 0.1299]
+  - risk_offset_std: [0.0009695359714832659, 0.0030099833886584834, 0.00503388517946129, 0.005971599450733445, 0.0072897187874430445]
+  - risk_oracle_mean: [0.0078, 0.0301, 0.058399999999999994, 0.0893, 0.1257]
+  - risk_oracle_std: [0.0008124038404635959, 0.002517935662402835, 0.004374928570845473, 0.006038211655780211, 0.005353503525729674]
+- raw summary path: results\exp1_label_shift_synth\20260114_132626\exp1_label_shift_synth_summary.json
+
+## exp2_auc_pr_invariance
+- timestamp: 2026-01-14T13:26:41.496639
+- table: results\exp2_auc_pr_invariance\20260114_132641\tables\exp2_auc_pr_invariance.csv
+- figure: results\exp2_auc_pr_invariance\20260114_132641\figures\exp2_auc_pr_invariance.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - auc_mean: [0.957277280336422, 0.9481990268194963, 0.9382324563792472, 0.9479018299008573, 0.9449659198335627]
+  - auc_std: [0.017930266697363282, 0.01319369338989127, 0.008192828464199423, 0.0045505127762712205, 0.005256737995717006]
+  - pr_auc_mean: [0.35277660119001314, 0.6358121432216275, 0.7153960093326965, 0.8437632436671405, 0.9447789915833791]
+  - pr_auc_std: [0.12294904845225552, 0.02751512495250373, 0.032235440830292734, 0.01349811720769218, 0.005187006549447399]
+- raw summary path: results\exp2_auc_pr_invariance\20260114_132641\exp2_auc_pr_invariance_summary.json
+
+## exp3_ess_vs_weight
+- timestamp: 2026-01-14T13:26:51.334537
+- table: results\exp3_ess_vs_weight\20260114_132651\tables\exp3_ess_vs_weight.csv
+- figure: results\exp3_ess_vs_weight\20260114_132651\figures\exp3_ess_vs_weight.png
+- raw summary path: results\exp3_ess_vs_weight\20260114_132651\exp3_ess_vs_weight_summary.json
+
+## exp4_concept_drift
+- timestamp: 2026-01-14T13:28:05.720822
+- table: results\exp4_concept_drift\20260114_132805\tables\exp4_concept_drift.csv
+- figure: results\exp4_concept_drift\20260114_132805\figures\exp4_concept_drift.png
+- metrics:
+  - risk_none_mean: [0.09949999999999999]
+  - risk_none_std: [0.004490731195102491]
+  - risk_offset_mean: [0.09949999999999999]
+  - risk_offset_std: [0.004490731195102491]
+  - risk_retrain_mean: [0.09683333333333333]
+  - risk_retrain_std: [0.001840893502864545]
+- raw summary path: results\exp4_concept_drift\20260114_132805\exp4_concept_drift_summary.json
+
+## exp5_realdata_breast_cancer
+- timestamp: 2026-01-14T13:28:15.064888
+- table: results\exp5_realdata_breast_cancer\20260114_132814\tables\exp5_realdata_breast_cancer.csv
+- figure: results\exp5_realdata_breast_cancer\20260114_132814\figures\exp5_realdata_breast_cancer.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.02456140350877193, 0.020350877192982456, 0.02947368421052632, 0.031578947368421054, 0.04842105263157895]
+  - risk_none_std: [0.011531001210635076, 0.005156820511122481, 0.014985372985307104, 0.009149757761687928, 0.01724660452974668]
+  - risk_offset_mean: [0.00912280701754386, 0.016842105263157894, 0.025964912280701753, 0.031578947368421054, 0.051929824561403506]
+  - risk_offset_std: [0.002807017543859649, 0.001403508771929824, 0.016987674999172215, 0.009149757761687928, 0.013388620370764147]
+  - risk_oracle_mean: [0.003508771929824561, 0.011929824561403509, 0.015438596491228071, 0.02526315789473684, 0.042105263157894736]
+  - risk_oracle_std: [0.0022191422176620207, 0.0017189401703741603, 0.009309823972927438, 0.007156518615568821, 0.016155599204521174]
+- raw summary path: results\exp5_realdata_breast_cancer\20260114_132814\exp5_realdata_breast_cancer_summary.json
+
+## exp6_calibration_label_shift
+- timestamp: 2026-01-16T15:59:53.873215
+- table: results\exp6_calibration_label_shift\20260116_155951\tables\exp6_calibration_label_shift.csv
+- figure: results\exp6_calibration_label_shift\20260116_155951\figures\exp6_calibration_label_shift.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.046900000000000004, 0.055299999999999995, 0.072, 0.09230000000000001, 0.1699]
+  - risk_none_std: [0.004641120554348916, 0.004632493928760187, 0.004806245936279165, 0.005971599450733445, 0.0120639960212195]
+  - risk_offset_mean: [0.0084, 0.0313, 0.061399999999999996, 0.09230000000000001, 0.1299]
+  - risk_offset_std: [0.0009695359714832659, 0.0030099833886584834, 0.00503388517946129, 0.005971599450733445, 0.0072897187874430445]
+  - risk_temp_offset_mean: [0.008499999999999999, 0.0312, 0.0621, 0.09230000000000001, 0.1295]
+  - risk_temp_offset_std: [0.0011401754250991382, 0.002803569153775238, 0.0048826222462934835, 0.005971599450733445, 0.007409453421137089]
+  - risk_isotonic_offset_mean: [0.0091, 0.0317, 0.0649, 0.09330000000000001, 0.1308]
+  - risk_isotonic_offset_std: [0.0013928388277184118, 0.0026191601707417603, 0.006506919393998976, 0.005240229002629566, 0.006217716622683931]
+  - feature_max_mean_diff_mean: [0.2184297949842417, 0.20504018983402023, 0.13774439850300788, 0.0581647582776873, 0.3195698293221988]
+  - feature_max_mean_diff_std: [0.025994250918652997, 0.019740021717457836, 0.014738209808990687, 0.0019011260010114775, 0.019359844466282368]
+  - feature_max_std_diff_mean: [0.09531915764808614, 0.07871527211794449, 0.05305143213639818, 0.0364460685090761, 0.06684971129602987]
+  - feature_max_std_diff_std: [0.016503616415678553, 0.015628729210092264, 0.010164837955270616, 0.010103152561137288, 0.011384024091468646]
+  - feature_max_ks_mean: [0.09650000000000003, 0.09300000000000003, 0.06490000000000001, 0.04009999999999998, 0.13120000000000004]
+  - feature_max_ks_std: [0.009964938534682473, 0.00822800097228966, 0.007844743462982083, 0.004029888335921976, 0.007606576102294681]
+  - feature_mean_ks_mean: [0.07431666666666667, 0.06588333333333334, 0.046300000000000015, 0.026466666666666673, 0.10375000000000001]
+  - feature_mean_ks_std: [0.007326398235907667, 0.005493834928556029, 0.003442221504913499, 0.0029770417830083953, 0.006921383933546506]
+- raw summary path: results\exp6_calibration_label_shift\20260116_155951\exp6_calibration_label_shift_summary.json
+
+## exp7_drift_types
+- timestamp: 2026-01-15T15:38:37.761526
+- table: results\exp7_drift_types\20260115_153837\tables\exp7_drift_types.csv
+- figure: results\exp7_drift_types\20260115_153837\figures\exp7_drift_types.png
+- metrics:
+  - drift_type: ['covariance_shift', 'feature_shift', 'label_noise']
+  - risk_none_mean: [0.1663, 0.09590000000000001, 0.3358]
+  - risk_none_std: [0.0061449165982948835, 0.0047791212581394125, 0.011893695809125087]
+  - risk_offset_mean: [0.1663, 0.09590000000000001, 0.3358]
+  - risk_offset_std: [0.0061449165982948835, 0.0047791212581394125, 0.011893695809125087]
+  - risk_retrain_mean: [0.1432, 0.0864, 0.3351]
+  - risk_retrain_std: [0.005617828762075248, 0.0019849433241279158, 0.009398936110007338]
+  - drift_score_mean: [3.754002303773069, 1.054830608212337, 1.0514469386995398]
+  - drift_score_std: [1.8075345954363493, 0.01069375763307779, 0.01639129989167669]
+  - feature_max_mean_diff_mean: [0.0387749156559718, 0.10334721434117175, 0.04331691277547816]
+  - feature_max_mean_diff_std: [0.012123310292702251, 0.018948505008518444, 0.01543365952156931]
+  - feature_max_std_diff_mean: [0.436201562902127, 0.04343795742144496, 0.03497044995198732]
+  - feature_max_std_diff_std: [0.024090978000000485, 0.013933839136587696, 0.007479775615143159]
+  - feature_max_ks_mean: [0.0967, 0.05970000000000002, 0.0341]
+  - feature_max_ks_std: [0.004925444142409907, 0.007658981655546649, 0.007512655988397163]
+  - feature_mean_ks_mean: [0.09048333333333333, 0.030750000000000006, 0.023983333333333346]
+  - feature_mean_ks_std: [0.003694741007311758, 0.0027983129838449975, 0.004345303978626421]
+- raw summary path: results\exp7_drift_types\20260115_153837\exp7_drift_types_summary.json
+
+## exp8_multimodal_label_shift
+- timestamp: 2026-01-15T14:20:44.261451
+- table: results\exp8_multimodal_label_shift\20260115_142043\tables\exp8_multimodal_label_shift.csv
+- figure: results\exp8_multimodal_label_shift\20260115_142043\figures\exp8_multimodal_label_shift.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.0403, 0.0442, 0.0583, 0.0726, 0.13599999999999998]
+  - risk_none_std: [0.008576712656956626, 0.004610856753359402, 0.005938013135721409, 0.006777905281132217, 0.006870225614927061]
+  - risk_offset_mean: [0.0077, 0.027800000000000002, 0.0507, 0.0726, 0.1059]
+  - risk_offset_std: [0.0017204650534085257, 0.004781213235152767, 0.004342810150121694, 0.006777905281132217, 0.008242572413997952]
+  - risk_oracle_mean: [0.0064, 0.0259, 0.0479, 0.07039999999999999, 0.10230000000000002]
+  - risk_oracle_std: [0.0013928388277184116, 0.004409081537009722, 0.002956349099818897, 0.005642694391866353, 0.006169278726074872]
+- raw summary path: results\exp8_multimodal_label_shift\20260115_142043\exp8_multimodal_label_shift_summary.json
+
+## exp9_covtype_label_shift
+- timestamp: 2026-01-15T19:04:04.664209
+- table: results\exp9_covtype_label_shift\20260115_190404\tables\exp9_covtype_label_shift.csv
+- figure: results\exp9_covtype_label_shift\20260115_190404\figures\exp9_covtype_label_shift.png
+- metrics:
+  - pi_test: [0.01, 0.05, 0.1, 0.2, 0.5]
+  - risk_none_mean: [0.06770000000000001, 0.09140000000000001, 0.12190000000000001, 0.187, 0.37960000000000005]
+  - risk_none_std: [0.005600000000000001, 0.005978294071054051, 0.0076118328935940276, 0.004242640687119289, 0.0077032460690283095]
+  - risk_offset_mean: [0.0102, 0.0512, 0.09809999999999999, 0.187, 0.25060000000000004]
+  - risk_offset_std: [0.00039999999999999964, 0.0017492855684535888, 0.003706750598570126, 0.004242640687119289, 0.008434453153583824]
+  - risk_oracle_mean: [0.0099, 0.0493, 0.09390000000000001, 0.18, 0.24230000000000002]
+  - risk_oracle_std: [0.00020000000000000017, 0.0006782329983125274, 0.0027459060435491988, 0.006648308055437871, 0.004057092555020163]
+- raw summary path: results\exp9_covtype_label_shift\20260115_190404\exp9_covtype_label_shift_summary.json
+
+Generated on 2026-01-16T16:40:23.598364
+
+## Dashboard highlights
+
+Highlights show the lowest mean-risk strategy for each experiment.
+
+- exp5_realdata_breast_cancer: `risk oracle` (mean risk 0.0196)
+  - table: results\exp5_realdata_breast_cancer\20260114_132814\tables\exp5_realdata_breast_cancer.csv
+  - figure: results\exp5_realdata_breast_cancer\20260114_132814\figures\exp5_realdata_breast_cancer.png
+- exp10_credit_card_fraud: `risk oracle` (mean risk 0.0291)
+  - table: results\exp10_credit_card_fraud\20260115_190800\tables\exp10_credit_card_fraud.csv
+  - figure: results\exp10_credit_card_fraud\20260115_190800\figures\exp10_credit_card_fraud.png
+- exp8_multimodal_label_shift: `risk oracle` (mean risk 0.0506)
+  - table: results\exp8_multimodal_label_shift\20260115_142043\tables\exp8_multimodal_label_shift.csv
+  - figure: results\exp8_multimodal_label_shift\20260115_142043\figures\exp8_multimodal_label_shift.png
+- exp11_high_variance_medical: `risk retrain` (mean risk 0.0614)
+  - table: results\exp11_high_variance_medical\20260116_164008\tables\exp11_high_variance_medical.csv
+  - figure: results\exp11_high_variance_medical\20260116_164008\figures\exp11_high_variance_medical.png
+- exp1_label_shift_synth: `risk oracle` (mean risk 0.0623)
+  - table: results\exp1_label_shift_synth\20260114_132626\tables\exp1_label_shift_synth.csv
+  - figure: results\exp1_label_shift_synth\20260114_132626\figures\exp1_label_shift_synth.png
+- exp6_calibration_label_shift: `risk offset` (mean risk 0.0647)
+  - table: results\exp6_calibration_label_shift\20260116_155951\tables\exp6_calibration_label_shift.csv
+  - figure: results\exp6_calibration_label_shift\20260116_155951\figures\exp6_calibration_label_shift.png
+- exp4_concept_drift: `risk retrain` (mean risk 0.0968)
+  - table: results\exp4_concept_drift\20260114_132805\tables\exp4_concept_drift.csv
+  - figure: results\exp4_concept_drift\20260114_132805\figures\exp4_concept_drift.png
+- exp9_covtype_label_shift: `risk oracle` (mean risk 0.1151)
+  - table: results\exp9_covtype_label_shift\20260115_190404\tables\exp9_covtype_label_shift.csv
+  - figure: results\exp9_covtype_label_shift\20260115_190404\figures\exp9_covtype_label_shift.png
+- exp7_drift_types: `risk retrain` (mean risk 0.1882)
+  - table: results\exp7_drift_types\20260115_153837\tables\exp7_drift_types.csv
+  - figure: results\exp7_drift_types\20260115_153837\figures\exp7_drift_types.png
+
+Best-risk figure: reports\best_risk_20260116_164023.png

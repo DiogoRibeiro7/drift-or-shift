@@ -7,12 +7,31 @@ from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 
+import numpy as np
 import pandas as pd
+
+from drift_or_shift.drift_monitor import (
+    covariance_frobenius_diff,
+    correlation_mean_diff,
+    feature_drift_summary,
+    multivariate_projection_ks,
+    univariate_feature_stats,
+)
 
 SEEDS = (0, 1, 2, 3, 4)
 PI_TEST_GRID = (0.5, 0.2, 0.1, 0.05, 0.01)
 PI_TRAIN = 0.2
 DEFAULT_COSTS = {"c10": 1.0, "c01": 1.0}
+DRIFT_FEATURE_METRICS = (
+    "feature_max_mean_diff",
+    "feature_max_std_diff",
+    "feature_max_ks",
+    "feature_mean_ks",
+    "feature_covariance_fro_diff",
+    "feature_correlation_mean_diff",
+    "feature_projection_max_ks",
+    "feature_projection_mean_ks",
+)
 
 
 @dataclass(frozen=True)
@@ -57,7 +76,26 @@ def aggregate_mean_std(
     """Return mean/std statistics for metrics grouped by the provided keys."""
     if isinstance(groupby, str):
         groupby = (groupby,)
-    grouped = df.groupby(list(groupby))
-    agg = grouped[list(metrics)].agg(["mean", _std_ddof0])
-    agg.columns = [f"{metric}_{suffix}" for metric, suffix in agg.columns]
-    return agg.reset_index()
+    if groupby:
+        grouped = df.groupby(list(groupby))
+        agg = grouped[list(metrics)].agg(["mean", _std_ddof0])
+        agg.columns = [f"{metric}_{suffix}" for metric, suffix in agg.columns]
+        return agg.reset_index()
+
+    agg = df[list(metrics)].agg(["mean", _std_ddof0])
+    data = {}
+    for metric in metrics:
+        data[f"{metric}_mean"] = float(agg.at["mean", metric])
+        data[f"{metric}_std"] = float(agg.at["std", metric])
+    return pd.DataFrame([data])
+
+
+def feature_drift_metrics(X_ref: np.ndarray, X_target: np.ndarray) -> dict[str, float]:
+    stats = univariate_feature_stats(X_ref, X_target)
+    summary = feature_drift_summary(stats)
+    summary["feature_covariance_fro_diff"] = covariance_frobenius_diff(X_ref, X_target)
+    summary["feature_correlation_mean_diff"] = correlation_mean_diff(X_ref, X_target)
+    projection_stats = multivariate_projection_ks(X_ref, X_target)
+    summary["feature_projection_max_ks"] = float(max(projection_stats))
+    summary["feature_projection_mean_ks"] = float(np.mean(projection_stats))
+    return summary

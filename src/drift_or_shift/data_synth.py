@@ -95,3 +95,67 @@ def resample_to_prevalence(
     indices = np.concatenate([chosen_pos, chosen_neg])
     rng.shuffle(indices)
     return X[indices], y[indices]
+
+
+def make_multimodal_binary(
+    n: int,
+    d: int,
+    pi: float,
+    components_neg: Sequence[tuple[Sequence[float], float]],
+    components_pos: Sequence[tuple[Sequence[float], float]],
+    sigma: float | np.ndarray,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Generate a binary dataset where each class is a mixture of Gaussians."""
+    if n <= 0:
+        raise ValueError("n must be positive.")
+    if d <= 0:
+        raise ValueError("d must be positive.")
+    _validate_prevalence(pi)
+    neg_means, neg_weights = _prep_mixture(components_neg, d)
+    pos_means, pos_weights = _prep_mixture(components_pos, d)
+    cov = _build_covariance(sigma, d)
+    labels = rng.choice([0, 1], size=n, p=[1 - pi, pi])
+    X = np.empty((n, d), dtype=float)
+    if np.any(labels == 0):
+        X[labels == 0] = _sample_mixture(cov, neg_means, neg_weights, rng, size=np.sum(labels == 0))
+    if np.any(labels == 1):
+        X[labels == 1] = _sample_mixture(cov, pos_means, pos_weights, rng, size=np.sum(labels == 1))
+    return X, labels
+
+
+def _prep_mixture(
+    components: Sequence[tuple[Sequence[float], float]], d: int
+) -> tuple[list[np.ndarray], np.ndarray]:
+    if not components:
+        raise ValueError("At least one mixture component is required.")
+    means: list[np.ndarray] = []
+    weights = []
+    for mean, weight in components:
+        if weight < 0:
+            raise ValueError("Mixture weights must be non-negative.")
+        arr = np.asarray(mean, dtype=float)
+        if arr.shape != (d,):
+            raise ValueError("Component means must match dimensionality d.")
+        means.append(arr)
+        weights.append(weight)
+    weights_arr = np.asarray(weights, dtype=float)
+    total = float(weights_arr.sum())
+    if total <= 0:
+        raise ValueError("Mixture weights must sum to a positive value.")
+    return means, weights_arr / total
+
+
+def _sample_mixture(
+    cov: np.ndarray,
+    means: Sequence[np.ndarray],
+    weights: np.ndarray,
+    rng: np.random.Generator,
+    *,
+    size: int,
+) -> np.ndarray:
+    if size == 0:
+        return np.empty((0, cov.shape[0]))
+    indices = rng.choice(len(means), size=size, p=weights)
+    samples = [rng.multivariate_normal(means[idx], cov, size=1)[0] for idx in indices]
+    return np.vstack(samples)
