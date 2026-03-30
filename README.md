@@ -1,8 +1,8 @@
-# DriftOrShift
+# drift-shift-pipeline
 
-![CI](https://github.com/drift-or-shift/drift-or-shift/actions/workflows/ci.yml/badge.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+![CI](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml/badge.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-DriftOrShift packages a lean research pipeline for reproducing the label shift insights from `ssrn-6052514`. Start with synthetic two-class Gaussian data, apply Bayes-ideal offset correction without retraining, and then inspect how invariances (ROC AUC) and dependencies (PR-AUC, ESS) emerge across multiple experiments. When the class-conditionals drift, we rerun logistic regression (concept drift experiment) and show why the offset-only strategy fails.
+`drift-shift-pipeline` packages a lean research pipeline for reproducing the label shift insights from `ssrn-6052514`. Start with synthetic two-class Gaussian data, apply Bayes-ideal offset correction without retraining, and then inspect how invariances (ROC AUC) and dependencies (PR-AUC, ESS) emerge across multiple experiments. When the class-conditionals drift, we rerun logistic regression (concept drift experiment) and show why the offset-only strategy fails.
 
 Use the CLI entry points or the experiment scripts to rerun every figure/table, and rely on the smoke runner + tests to stay release-ready as you iterate.
 

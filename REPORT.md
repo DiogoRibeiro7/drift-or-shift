@@ -1,4 +1,4 @@
-% Experiment Report for DriftOrShift
+% Experiment Report for drift-shift-pipeline
 
 This report walks through rerunning the experiments end-to-end and explains what each artifact says about label shift and concept drift. The numeric summary lives in `RESULTS_DIGEST.md`, so use that for a quick glance at metrics.
 

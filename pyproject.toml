@@ -3,7 +3,7 @@ requires = ["setuptools>=60.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "drift-or-shift"
+name = "drift-shift-pipeline"
 version = "0.1.0"
 description = "Reproduce insights on label shift and offset correction from ssrn-6052514."
 authors = [
@@ -32,12 +32,12 @@ dev = [
 ]
 
 [project.scripts]
-dos-exp1 = "drift_or_shift.experiments.exp1_label_shift_synth:main"
-dos-exp2 = "drift_or_shift.experiments.exp2_auc_pr_invariance:main"
-dos-exp3 = "drift_or_shift.experiments.exp3_ess_vs_weight:main"
-dos-exp4 = "drift_or_shift.experiments.exp4_concept_drift:main"
-dos-exp5 = "drift_or_shift.experiments.exp5_realdata_breast_cancer:main"
-dos-exp6 = "drift_or_shift.experiments.exp6_calibration_label_shift:main"
+dos-exp1 = "drift_or_shift.experiments.experiments.exp1_label_shift_synth:main"
+dos-exp2 = "drift_or_shift.experiments.experiments.exp2_auc_pr_invariance:main"
+dos-exp3 = "drift_or_shift.experiments.experiments.exp3_ess_vs_weight:main"
+dos-exp4 = "drift_or_shift.experiments.experiments.exp4_concept_drift:main"
+dos-exp5 = "drift_or_shift.experiments.experiments.exp5_realdata_breast_cancer:main"
+dos-exp6 = "drift_or_shift.experiments.experiments.exp6_calibration_label_shift:main"
 dos-exp7 = "drift_or_shift.experiments.experiments.exp7_drift_types:main"
 dos-exp8 = "drift_or_shift.experiments.experiments.exp8_multimodal_label_shift:main"
 dos-exp9 = "drift_or_shift.experiments.experiments.exp9_covtype_label_shift:main"

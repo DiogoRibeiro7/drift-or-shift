@@ -1,1 +1,47 @@
-"\"\"\"Regression tests that ensure drift alerts can fail the aggregator.\"\"\"\n+\n+from __future__ import annotations\n+\n+import json\n+import subprocess\n+import sys\n+\n+def test_aggregate_results_fail_on_alerts(tmp_path) -> None:\n+    results_dir = tmp_path / \"results\"\n+    run_dir = results_dir / \"expX\" / \"20260101_000000\"\n+    run_dir.mkdir(parents=True)\n+    summary = {\n+        \"exp_name\": \"expX\",\n+        \"timestamp\": \"2026-01-01T00:00:00\",\n+        \"pi_test\": [0.1],\n+        \"aggregated\": {\n+            \"risk_none_mean\": [0.1],\n+            \"risk_offset_mean\": [0.05],\n+            \"feature_max_ks\": [0.3],\n+        },\n+    }\n+    summary_path = run_dir / \"expX_summary.json\"\n+    summary_path.write_text(json.dumps(summary), encoding=\"utf-8\")\n+\n+    dashboard = tmp_path / \"dashboard.md\"\n+    figure = tmp_path / \"best.png\"\n+    alerts = tmp_path / \"alerts.csv\"\n+    result = subprocess.run(\n+        [\n+            sys.executable,\n+            \"scripts/aggregate_results.py\",\n+            \"--results-dir\",\n+            str(results_dir),\n+            \"--output\",\n+            str(dashboard),\n+            \"--figure\",\n+            str(figure),\n+            \"--drift-output\",\n+            str(alerts),\n+            \"--fail-on-alerts\",\n+        ],\n+        check=False,\n+    )\n+    assert result.returncode == 1\n+    assert alerts.exists()\n*** End Patch*** 
+"""Regression tests that ensure drift alerts can fail the aggregator."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+
+
+def test_aggregate_results_fail_on_alerts(tmp_path) -> None:
+    results_dir = tmp_path / "results"
+    run_dir = results_dir / "expX" / "20260101_000000"
+    run_dir.mkdir(parents=True)
+    summary = {
+        "exp_name": "expX",
+        "timestamp": "2026-01-01T00:00:00",
+        "pi_test": [0.1],
+        "aggregated": {
+            "risk_none_mean": [0.1],
+            "risk_offset_mean": [0.05],
+            "feature_max_ks": [0.3],
+        },
+    }
+    summary_path = run_dir / "expX_summary.json"
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    dashboard = tmp_path / "dashboard.md"
+    figure = tmp_path / "best.png"
+    alerts = tmp_path / "alerts.csv"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/aggregate_results.py",
+            "--results-dir",
+            str(results_dir),
+            "--output",
+            str(dashboard),
+            "--figure",
+            str(figure),
+            "--drift-output",
+            str(alerts),
+            "--fail-on-alerts",
+        ],
+        check=False,
+    )
+    assert result.returncode == 1
+    assert alerts.exists()
