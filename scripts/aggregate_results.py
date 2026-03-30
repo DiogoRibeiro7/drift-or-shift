@@ -14,6 +14,7 @@ from drift_or_shift.reporting import (
     collect_summary_jsons,
     detect_drift_alerts,
     format_results_overview,
+    load_drift_alert_thresholds,
     select_latest_summaries,
     write_drift_alerts,
 )
@@ -32,6 +33,7 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="exit with status 1 when drift alerts appear",
     )
+    parser.add_argument("--threshold-config", type=Path, default=None, help="YAML/JSON file with drift thresholds")
     return parser.parse_args()
 
 
@@ -188,7 +190,8 @@ def main() -> None:
         _plot_best_risks(records, figure_path)
         print(f"best-risk figure written to {figure_path}")
 
-    drift_path = write_drift_alerts(latest, args.drift_output)
+    thresholds = load_drift_alert_thresholds(args.threshold_config)
+    drift_path = write_drift_alerts(latest, args.drift_output, thresholds=thresholds)
     if drift_path.exists():
         print(f"drift alerts written to {drift_path}")
         if args.fail_on_alerts and drift_path.stat().st_size > 0:
