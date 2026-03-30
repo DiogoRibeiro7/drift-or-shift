@@ -123,6 +123,33 @@ def collect_drift_alert_records(
     return records
 
 
+def load_drift_alert_thresholds(path: Path | str | None = None) -> dict[str, float]:
+    """Load drift alert thresholds from YAML/JSON file or return defaults."""
+    if path is None:
+        return DRIFT_ALERT_THRESHOLDS
+    source = Path(path)
+    if not source.exists():
+        raise FileNotFoundError(f"Threshold config not found: {source}")
+    text = source.read_text(encoding="utf-8")
+    try:
+        import yaml
+
+        thresholds = yaml.safe_load(text)
+    except ImportError:
+        import json
+
+        thresholds = json.loads(text)
+
+    if not isinstance(thresholds, dict):
+        raise ValueError("Threshold config must be a mapping")
+    parsed: dict[str, float] = {}
+    for key, value in thresholds.items():
+        if not isinstance(key, str):
+            raise ValueError("Threshold keys must be strings")
+        parsed[key] = float(value)
+    return {**DRIFT_ALERT_THRESHOLDS, **parsed}
+
+
 def write_drift_alerts(
     summaries: Sequence[dict],
     output_path: Path | str,
