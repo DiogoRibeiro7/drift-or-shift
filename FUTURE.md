@@ -1,6 +1,6 @@
 # Future Work Appendix
 
-These extensions outline what to tackle after the current milestones to keep DriftOrShift relevant to new datasets, drift regimes, and evaluation methodologies.
+These extensions outline what to tackle after the current milestones to keep drift-shift-pipeline relevant to new datasets, drift regimes, and evaluation methodologies.
 
 1. **Broader datasets & domain gaps.** Exp8 now provides a synthetic multi-modal benchmark, Exp9 adds Covertype, and Exp10 covers credit card fraud; next iterate on other high-variance financial or medical benchmarks so decision boundaries can be highly non-linear or class covariances shift more drastically. *Learning goal: assess whether logit offsets remain accurate when decision boundaries become non-linear or when feature covariances differ per class.*
 2. **Extended drift types.** Exp7 now sweeps covariance scaling, feature shifts, and label noise while reporting density-ratio drift scores; next, extend the monitors (e.g., training-time feature statistics or multivariate KS tests) to see if more subtle drifts can be flagged earlier. *Learning goal: map which drift types break the single-scalar offset and quantify when retraining or domain adaptation becomes mandatory.*

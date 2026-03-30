@@ -1,4 +1,4 @@
-"""DriftOrShift: label shift and offset correction utilities."""
+"""drift-shift-pipeline: label shift and offset correction utilities."""
 
 from .calibration import (
     apply_calibrator,
