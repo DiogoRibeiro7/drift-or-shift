@@ -1,1 +1,67 @@
-"\"\"\"Compare feature distributions and raise alerts when drift exceeds a threshold.\"\"\"\n+\n+from __future__ import annotations\n+\n+import argparse\n+from pathlib import Path\n+\n+import numpy as np\n+import pandas as pd\n+\n+from drift_or_shift.drift_monitor import feature_drift_summary, univariate_feature_stats\n+from drift_or_shift.reporting import DRIFT_ALERT_THRESHOLDS\n+\n+\n+def _load_features(path: Path) -> np.ndarray:\n+    df = pd.read_csv(path)\n+    if df.empty:\n+        raise ValueError(f\"input file {path} is empty\")\n+    numeric = df.select_dtypes(include=[np.number])\n+    if numeric.shape[1] == 0:\n+        raise ValueError(f\"no numeric features found in {path}\")\n+    return numeric.to_numpy()\n+\n+\n+def _parse_args() -> argparse.Namespace:\n+    parser = argparse.ArgumentParser(description=\"Compute drift stats between reference and target data.\")\n+    parser.add_argument(\"--reference\", type=Path, required=True)\n+    parser.add_argument(\"--target\", type=Path, required=True)\n+    parser.add_argument(\"--mean-threshold\", type=float, default=DRIFT_ALERT_THRESHOLDS[\"feature_max_mean_diff\"])\n+    parser.add_argument(\"--std-threshold\", type=float, default=DRIFT_ALERT_THRESHOLDS[\"feature_max_std_diff\"])\n+    parser.add_argument(\"--ks-threshold\", type=float, default=DRIFT_ALERT_THRESHOLDS[\"feature_max_ks\"])\n+    return parser.parse_args()\n+\n+\n+def _thresholds_from_args(args: argparse.Namespace) -> dict[str, float]:\n+    return {\n+        \"feature_max_mean_diff\": args.mean_threshold,\n+        \"feature_max_std_diff\": args.std_threshold,\n+        \"feature_max_ks\": args.ks_threshold,\n+    }\n+\n+\n+def main() -> None:\n+    args = _parse_args()\n+    reference = _load_features(args.reference)\n+    target = _load_features(args.target)\n+    stats = univariate_feature_stats(reference, target)\n+    summary = feature_drift_summary(stats)\n+    thresholds = _thresholds_from_args(args)\n+    alerts = [\n+        (metric, summary.get(metric, 0.0), threshold)\n+        for metric, threshold in thresholds.items()\n+        if summary.get(metric, 0.0) >= threshold\n+    ]\n+    print(\"Feature drift summary:\")\n+    for name, value in summary.items():\n+        print(f\"- {name}: {value:.4f}\")\n+    if alerts:\n+        print(\"Drift alerts:\")\n+        for metric, value, threshold in alerts:\n+            print(f\"- {metric}: {value:.4f} exceeds threshold {threshold:.4f}\")\n+        raise SystemExit(1)\n+    print(\"No drift alerts detected.\")\n+\n+\n+if __name__ == \"__main__\":\n+    main()\n*** End Patch*** 
+"""Compare feature distributions and raise alerts when drift exceeds a threshold."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from drift_or_shift.drift_monitor import feature_drift_summary, univariate_feature_stats
+from drift_or_shift.reporting import DRIFT_ALERT_THRESHOLDS
+
+
+def _load_features(path: Path) -> np.ndarray:
+    df = pd.read_csv(path)
+    if df.empty:
+        raise ValueError(f"input file {path} is empty")
+    numeric = df.select_dtypes(include=[np.number])
+    if numeric.shape[1] == 0:
+        raise ValueError(f"no numeric features found in {path}")
+    return numeric.to_numpy()
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Compute drift stats between reference and target data.")
+    parser.add_argument("--reference", type=Path, required=True)
+    parser.add_argument("--target", type=Path, required=True)
+    parser.add_argument("--mean-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_mean_diff"])
+    parser.add_argument("--std-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_std_diff"])
+    parser.add_argument("--ks-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_ks"])
+    return parser.parse_args()
+
+
+def _thresholds_from_args(args: argparse.Namespace) -> dict[str, float]:
+    return {
+        "feature_max_mean_diff": args.mean_threshold,
+        "feature_max_std_diff": args.std_threshold,
+        "feature_max_ks": args.ks_threshold,
+    }
+
+
+def main() -> None:
+    args = _parse_args()
+    reference = _load_features(args.reference)
+    target = _load_features(args.target)
+    stats = univariate_feature_stats(reference, target)
+    summary = feature_drift_summary(stats)
+    thresholds = _thresholds_from_args(args)
+    alerts = [
+        (metric, summary.get(metric, 0.0), threshold)
+        for metric, threshold in thresholds.items()
+        if summary.get(metric, 0.0) >= threshold
+    ]
+    print("Feature drift summary:")
+    for name, value in summary.items():
+        print(f"- {name}: {value:.4f}")
+    if alerts:
+        print("Drift alerts:")
+        for metric, value, threshold in alerts:
+            print(f"- {metric}: {value:.4f} exceeds threshold {threshold:.4f}")
+        raise SystemExit(1)
+    print("No drift alerts detected.")
+
+
+if __name__ == "__main__":
+    main()

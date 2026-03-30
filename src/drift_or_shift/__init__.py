@@ -108,5 +108,8 @@ __all__ = [
     "find_best_temperature",
     "fit_isotonic_calibrator",
     "temperature_scale",
+    "apply_logit_offset",
+    "decision_from_logits",
+    "logit_offset",
     "DRIFT_FEATURE_METRICS",
 ]
