@@ -64,3 +64,5 @@ Use the CLI entry points or the experiment scripts to rerun every figure/table, 
 - Follow `RELEASE.md` when preparing versioned candidates: bump metadata, run the smoke script, capture results, and tag.
 - `FUTURE.md` holds candidate extensions (new datasets, drift types, calibration studies, automation dashboards) plus their learning goals.
 - `tests/test_smoke_exp1_script.py` invokes the smoke runner every pytest session to guard against regressions.
+
+[![Build Status](https://github.com/DiogoRibeiro7/drift-shift-pipeline/workflows/CI/badge.svg)](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions)
