@@ -10,23 +10,23 @@ This report walks through rerunning the experiments end-to-end and explains what
 2. Each experiment writes to `results/<exp_name>/<timestamp>/` with `tables/`, `figures/`, and a `_summary.json`. Run them with the provided script files:
    - **Exp1 (label shift)**:
      ```sh
-     python src/drift_or_shift/experiments/experiments/exp1_label_shift_synth.py --results-dir results
+     python src/drift_or_shift/experiments/exp1_label_shift_synth.py --results-dir results
      ```
    - **Exp2 (ROC/PR invariance)**:
      ```sh
-     python src/drift_or_shift/experiments/experiments/exp2_auc_pr_invariance.py --results-dir results
+     python src/drift_or_shift/experiments/exp2_auc_pr_invariance.py --results-dir results
      ```
    - **Exp3 (ESS vs. class weight)**:
      ```sh
-     python src/drift_or_shift/experiments/experiments/exp3_ess_vs_weight.py --results-dir results
+     python src/drift_or_shift/experiments/exp3_ess_vs_weight.py --results-dir results
      ```
    - **Exp4 (concept drift)**:
      ```sh
-     python src/drift_or_shift/experiments/experiments/exp4_concept_drift.py --results-dir results
+     python src/drift_or_shift/experiments/exp4_concept_drift.py --results-dir results
      ```
    - **Exp5 (breast cancer label shift)**:
      ```sh
-     python src/drift_or_shift/experiments/experiments/exp5_realdata_breast_cancer.py --results-dir results
+     python src/drift_or_shift/experiments/exp5_realdata_breast_cancer.py --results-dir results
      ```
 3. Each script honors CLI flags shown in its `_parse_args` function (`--n-train`, `--pi-tests`, `--c10`, etc.), so you can create smaller runs (fewer seeds, fewer prevalences) for quick checks. Always point `--results-dir` to the same base so artifacts group under `results/<exp>/<timestamp>/`.
 

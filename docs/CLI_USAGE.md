@@ -45,13 +45,13 @@ For each `dos-expN` script, common CLI flags include:
 
 Example:
 ```bash
-python src/drift_or_shift/experiments/experiments/exp1_label_shift_synth.py --seed 42 --pi_test 0.2 --results-dir results/exp1
+python src/drift_or_shift/experiments/exp1_label_shift_synth.py --seed 42 --pi_test 0.2 --results-dir results/exp1
 ```
 
 ## 4) Recommended debug workflow
 
 1. Run one experiment with short config:
-   - `python src/drift_or_shift/experiments/experiments/exp1_label_shift_synth.py --seed 42 --pi_test 0.2 --results-dir results/exp1`.
+   - `python src/drift_or_shift/experiments/exp1_label_shift_synth.py --seed 42 --pi_test 0.2 --results-dir results/exp1`.
 2. Run drift alerts:
    - `python scripts/drift_alerts.py --results-dir results --output reports/drift_alerts.csv`.
 3. Run dashboard aggregation:

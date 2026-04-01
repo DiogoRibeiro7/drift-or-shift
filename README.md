@@ -27,17 +27,17 @@ Use the CLI entry points or the experiment scripts to rerun every figure/table, 
 
 ## Experiments snapshot
 
-- `dos-exp1`: synthetic label shift with offset correction vs. oracle risk (`src/drift_or_shift/experiments/experiments/exp1_label_shift_synth.py`).
+- `dos-exp1`: synthetic label shift with offset correction vs. oracle risk (`src/drift_or_shift/experiments/exp1_label_shift_synth.py`).
 - `dos-exp2`: ROC AUC invariance and PR-AUC dependence (`exp2_auc_pr_invariance.py`).
 - `dos-exp3`: ESS fraction as class weight α grows (`exp3_ess_vs_weight.py`).
 - `dos-exp4`: concept drift demonstration (standard vs. offset vs. retrained).
 - `dos-exp5`: breast cancer label shift replication with resampling.
 - `dos-exp6`: calibration vs. offset risks (temperature scaling + isotonic calibrators under label shift).
-- `dos-exp7`: drift-type sweep showing how covariance, feature, and label shifts defeat the single offset (`src/drift_or_shift/experiments/experiments/exp7_drift_types.py`).
-- `dos-exp8`: multimodal label shift with mixture components to stress-test offsets (`src/drift_or_shift/experiments/experiments/exp8_multimodal_label_shift.py`).
-- `dos-exp9`: Covertype label shift replication for a real-world, high-dimensional dataset (`src/drift_or_shift/experiments/experiments/exp9_covtype_label_shift.py`).
-- `dos-exp10`: credit card fraud label shift benchmark with standardized features and sample-reweighted prevalences (`src/drift_or_shift/experiments/experiments/exp10_credit_card_fraud.py`).
-- `dos-exp11`: high-variance medical-style benchmark that injects class-specific covariances and nonlinear test shifts to stress offset correction (`src/drift_or_shift/experiments/experiments/exp11_high_variance_medical.py`).
+- `dos-exp7`: drift-type sweep showing how covariance, feature, and label shifts defeat the single offset (`src/drift_or_shift/experiments/exp7_drift_types.py`).
+- `dos-exp8`: multimodal label shift with mixture components to stress-test offsets (`src/drift_or_shift/experiments/exp8_multimodal_label_shift.py`).
+- `dos-exp9`: Covertype label shift replication for a real-world, high-dimensional dataset (`src/drift_or_shift/experiments/exp9_covtype_label_shift.py`).
+- `dos-exp10`: credit card fraud label shift benchmark with standardized features and sample-reweighted prevalences (`src/drift_or_shift/experiments/exp10_credit_card_fraud.py`).
+- `dos-exp11`: high-variance medical-style benchmark that injects class-specific covariances and nonlinear test shifts to stress offset correction (`src/drift_or_shift/experiments/exp11_high_variance_medical.py`).
 - Each run writes `tables/`, `figures/`, and a `_summary.json` into `results/<exp>/<timestamp>/`.
 
 ## Reproducibility practices
