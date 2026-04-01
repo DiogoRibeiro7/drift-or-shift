@@ -32,17 +32,17 @@ dev = [
 ]
 
 [project.scripts]
-dos-exp1 = "drift_or_shift.experiments.experiments.exp1_label_shift_synth:main"
-dos-exp2 = "drift_or_shift.experiments.experiments.exp2_auc_pr_invariance:main"
-dos-exp3 = "drift_or_shift.experiments.experiments.exp3_ess_vs_weight:main"
-dos-exp4 = "drift_or_shift.experiments.experiments.exp4_concept_drift:main"
-dos-exp5 = "drift_or_shift.experiments.experiments.exp5_realdata_breast_cancer:main"
-dos-exp6 = "drift_or_shift.experiments.experiments.exp6_calibration_label_shift:main"
-dos-exp7 = "drift_or_shift.experiments.experiments.exp7_drift_types:main"
-dos-exp8 = "drift_or_shift.experiments.experiments.exp8_multimodal_label_shift:main"
-dos-exp9 = "drift_or_shift.experiments.experiments.exp9_covtype_label_shift:main"
-dos-exp10 = "drift_or_shift.experiments.experiments.exp10_credit_card_fraud:main"
-dos-exp11 = "drift_or_shift.experiments.experiments.exp11_high_variance_medical:main"
+dos-exp1 = "drift_or_shift.experiments.exp1_label_shift_synth:main"
+dos-exp2 = "drift_or_shift.experiments.exp2_auc_pr_invariance:main"
+dos-exp3 = "drift_or_shift.experiments.exp3_ess_vs_weight:main"
+dos-exp4 = "drift_or_shift.experiments.exp4_concept_drift:main"
+dos-exp5 = "drift_or_shift.experiments.exp5_realdata_breast_cancer:main"
+dos-exp6 = "drift_or_shift.experiments.exp6_calibration_label_shift:main"
+dos-exp7 = "drift_or_shift.experiments.exp7_drift_types:main"
+dos-exp8 = "drift_or_shift.experiments.exp8_multimodal_label_shift:main"
+dos-exp9 = "drift_or_shift.experiments.exp9_covtype_label_shift:main"
+dos-exp10 = "drift_or_shift.experiments.exp10_credit_card_fraud:main"
+dos-exp11 = "drift_or_shift.experiments.exp11_high_variance_medical:main"
 
 [tool.ruff]
 line-length = 88
