@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Sequence, cast
 
 import numpy as np
 
@@ -36,7 +36,8 @@ def _validate_prevalence(pi: float) -> None:
 
 def _build_covariance(sigma: float | np.ndarray, d: int) -> np.ndarray:
     if np.isscalar(sigma):
-        return np.eye(d, dtype=float) * float(sigma)
+        scalar = float(cast(float, np.asarray(sigma, dtype=float)))
+        return np.eye(d, dtype=float) * scalar
     cov = np.asarray(sigma, dtype=float)
     if cov.shape != (d, d):
         raise ValueError("Covariance must be scalar or a d-by-d array.")

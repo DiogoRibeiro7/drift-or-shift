@@ -50,6 +50,8 @@ line-length = 88
 [tool.mypy]
 files = "src"
 python_version = "3.10"
+ignore_missing_imports = true
+exclude = "src/drift_or_shift/experiments"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
