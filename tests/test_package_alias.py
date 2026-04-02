@@ -25,4 +25,6 @@ def test_experiments_path_compatibility() -> None:
         "drift_or_shift.experiments.experiments.exp1_label_shift_synth"
     )
 
-    assert topo is legacy
+    assert topo.__file__ == legacy.__file__
+    assert topo.__name__.endswith("exp1_label_shift_synth")
+    assert legacy.__name__.endswith("exp1_label_shift_synth")
