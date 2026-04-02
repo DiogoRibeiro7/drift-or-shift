@@ -13,3 +13,16 @@ def test_import_alias_modules_are_equivalent() -> None:
 
 def test_import_alias_sane_version() -> None:
     assert hasattr(drift_shift_pipeline, "__version__")
+
+
+def test_experiments_path_compatibility() -> None:
+    import importlib
+
+    topo = importlib.import_module(
+        "drift_or_shift.experiments.exp1_label_shift_synth"
+    )
+    legacy = importlib.import_module(
+        "drift_or_shift.experiments.experiments.exp1_label_shift_synth"
+    )
+
+    assert topo is legacy

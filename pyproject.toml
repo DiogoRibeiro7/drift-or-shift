@@ -55,4 +55,4 @@ exclude = "src/drift_or_shift/experiments"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["drift_or_shift", "caliblab"]
+packages = ["find:"]
