@@ -158,7 +158,13 @@ exclude = "^src/drift_or_shift/experiments/"
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = "-ra --strict-markers --strict-config"
+# `-m "not network"` keeps the default run offline and fast. Run the
+# dataset-downloading experiments explicitly with `-m network`.
+addopts = "-ra --strict-markers --strict-config -m 'not network'"
+markers = [
+    "network: requires downloading an external dataset",
+    "slow: takes more than a few seconds",
+]
 filterwarnings = [
     "error::DeprecationWarning:drift_or_shift.*",
     "error::DeprecationWarning:caliblab.*",
@@ -171,6 +177,10 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+# A floor, not a target. Set below the current figure so ordinary churn does
+# not fail the build, but a real regression does. exp9/exp10 are excluded from
+# the default run (they download datasets), which caps the achievable number.
+fail_under = 85
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
