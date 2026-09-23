@@ -13,7 +13,7 @@ from sklearn.calibration import calibration_curve
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as handle:
+    with Path(path).open(encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
@@ -38,14 +38,17 @@ def run_make_figures(config_path: Path | str) -> Path:
     figure_dir.mkdir(parents=True, exist_ok=True)
     methods = config.get("figures", {}).get("reliability", {}).get("methods")
     if not methods:
-        combos = sorted({f"{est}|{cal}" for est, cal in zip(df["estimator"], df["calibration"])})
+        combos = sorted(
+            {
+                f"{est}|{cal}"
+                for est, cal in zip(df["estimator"], df["calibration"], strict=True)
+            }
+        )
         methods = combos
     fig, ax = plt.subplots(figsize=(6, 5))
     for method in methods:
         estimator, calibration = _parse_method(method)
-        subset = df[
-            (df["estimator"] == estimator) & (df["calibration"] == calibration)
-        ]
+        subset = df[(df["estimator"] == estimator) & (df["calibration"] == calibration)]
         if subset.empty:
             continue
         prob_true, prob_pred = calibration_curve(
@@ -74,8 +77,12 @@ def run_make_figures(config_path: Path | str) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build figures from benchmark outputs.")
-    parser.add_argument("--config", required=True, type=Path, help="Path to YAML config.")
+    parser = argparse.ArgumentParser(
+        description="Build figures from benchmark outputs."
+    )
+    parser.add_argument(
+        "--config", required=True, type=Path, help="Path to YAML config."
+    )
     args = parser.parse_args()
     run_make_figures(args.config)
 

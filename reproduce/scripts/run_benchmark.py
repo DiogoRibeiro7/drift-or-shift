@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import yaml
-from caliblab import benchmark
 from sklearn.datasets import load_breast_cancer, load_digits, load_iris
+
+from caliblab import benchmark
 
 _DATASETS: dict[str, Any] = {
     "breast_cancer": load_breast_cancer,
@@ -20,7 +21,7 @@ _DATASETS: dict[str, Any] = {
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as handle:
+    with Path(path).open(encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
@@ -52,7 +53,7 @@ def run_benchmark(config_path: Path | str) -> Path:
     )
     raw_dir = Path(config["outputs"]["raw"])
     raw_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     out_path = raw_dir / f"benchmark_{timestamp}.csv"
     result.to_csv(out_path, index=False)
     return out_path
@@ -60,7 +61,9 @@ def run_benchmark(config_path: Path | str) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the calibration benchmark.")
-    parser.add_argument("--config", required=True, type=Path, help="Path to YAML config.")
+    parser.add_argument(
+        "--config", required=True, type=Path, help="Path to YAML config."
+    )
     args = parser.parse_args()
     run_benchmark(args.config)
 
