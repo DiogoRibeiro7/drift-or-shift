@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
+from numpy.typing import ArrayLike
 from sklearn.linear_model import LogisticRegression
 
 
@@ -16,8 +16,8 @@ def _rng_seed(rng: np.random.Generator | None) -> int | None:
 
 
 def fit_logistic_regression(
-    X: Sequence[Sequence[float]],
-    y: Sequence[int],
+    X: ArrayLike,
+    y: ArrayLike,
     *,
     class_weight: dict[int, float] | None = None,
     C: float = 1.0,
@@ -38,8 +38,6 @@ def fit_logistic_regression(
     return model
 
 
-def predict_logits(
-    model: LogisticRegression, X: Sequence[Sequence[float]]
-) -> np.ndarray:
+def predict_logits(model: LogisticRegression, X: ArrayLike) -> np.ndarray:
     """Return decision scores (logits) from the fitted model."""
     return model.decision_function(X)

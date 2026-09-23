@@ -34,6 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   explains how to regenerate a run instead.
 - `REPORT.md` documented five of the eleven experiments and invoked them by file
   path rather than the installed `dos-expN` console scripts.
+- **The public API rejected the array types it is actually called with.**
+  Every helper was annotated `Sequence[float]` / `Sequence[int]` while being
+  called throughout the experiments with NumPy arrays and pandas Series. Since
+  the package ships `py.typed`, that narrowness reached downstream users too:
+  passing a NumPy array to a NumPy library produced a type error. Widened to
+  `numpy.typing.ArrayLike`, already the convention in `calibration` and
+  `drift_variants`. This removed 165 type errors, all of them `arg-type`.
+- **`plot_auc_pr_vs_prevalence` warned on every draw.** It built its panels
+  with `sharex=True` and then switched them to a log scale, which makes
+  matplotlib attempt a non-positive xlim. Both panels plot the same
+  prevalences, so their limits are identical without sharing.
 - **The distribution could not be built at all.** `tool.setuptools.packages` was
   set to the literal string `"find:"`, which modern setuptools rejects as an
   invalid package name. `pip install .` failed outright and `pip install -e .`
@@ -60,8 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The published results are now enforced. `tests/test_documented_results.py`
   re-runs the configurations behind `RESULTS_DIGEST.md` on every CI build and
   checks the published figures as well as the qualitative claims, so the digest
-  cannot silently go stale. Exp1, Exp3, Exp4, and Exp5 all reproduce their
-  documented numbers exactly.
+  cannot silently go stale. Exp1-Exp4 reproduce their documented numbers
+  exactly; Exp5's were re-derived by the convergence fix above.
 - Automated releases. Pushing a `v*` tag builds and smoke-tests the
   distribution and publishes a GitHub Release with notes taken from this file.
   The workflow refuses to publish a tag that does not match
@@ -79,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow hardening found by zizmor: tag names are no longer interpolated
   into shell (a code-injection vector), and checkouts no longer persist
   credentials.
+- `drift_or_shift.experiments` is now type-checked. The package was excluded
+  from mypy entirely, leaving eleven modules unchecked; with the annotations
+  corrected the exclusion is gone and mypy covers 28 files instead of 14.
+- `tests/test_array_like_api.py` pins the runtime half of the array-like
+  contract, plus a guard that the plot helpers draw without warnings.
 - Test coverage raised from 44% to 89% (48 tests to 153).
   - `tests/test_experiments_cli.py` drives all eleven experiments through
     their real command line. The nine offline experiments were previously at
