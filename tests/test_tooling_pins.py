@@ -29,10 +29,12 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 PRE_COMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 
 # hook repository -> distribution name in the dev extra
+MYPY_MIRROR = "https://github.com/pre-commit/mirrors-mypy"
+
 HOOK_REPOS = {
     "https://github.com/astral-sh/ruff-pre-commit": "ruff",
     "https://github.com/psf/black-pre-commit-mirror": "black",
-    "https://github.com/pre-commit/mirrors-mypy": "mypy",
+    MYPY_MIRROR: "mypy",
 }
 
 PIN = re.compile(r"^(?P<name>[A-Za-z0-9_.-]+)==(?P<version>[^;\s]+)")
@@ -63,6 +65,22 @@ def _rev_for(config: dict, repo_url: str) -> str:
     raise AssertionError(f"no pre-commit repo entry for {repo_url}")
 
 
+def _mypy_hook_dependencies(config: dict) -> list[str]:
+    """Return the mypy hook's `additional_dependencies`.
+
+    Written as a lookup that always either returns or raises, rather than a
+    `for/else` that assigns and breaks: on the fall-through path the latter
+    leaves the result unbound, which CodeQL flags as
+    `py/uninitialized-local-variable`. It is unreachable because `pytest.fail`
+    raises, but a function that cannot express the bad state is better than one
+    that relies on a reader knowing that.
+    """
+    for repo in config["repos"]:
+        if repo["repo"] == MYPY_MIRROR:
+            return list(repo["hooks"][0].get("additional_dependencies", []))
+    raise AssertionError(f"no {MYPY_MIRROR} hook in {PRE_COMMIT.name}")
+
+
 @pytest.mark.parametrize(("repo_url", "package"), sorted(HOOK_REPOS.items()))
 def test_hook_revision_matches_the_dev_extra(
     dev_pins, pre_commit_config, repo_url: str, package: str
@@ -84,15 +102,7 @@ def test_mypy_hook_stubs_match_the_dev_extra(dev_pins, pre_commit_config) -> Non
     Different stub versions mean the hook and CI can disagree about types even
     when the mypy versions line up.
     """
-    for repo in pre_commit_config["repos"]:
-        if repo["repo"] != "https://github.com/pre-commit/mirrors-mypy":
-            continue
-        extras = repo["hooks"][0].get("additional_dependencies", [])
-        break
-    else:  # pragma: no cover - guarded by the test above
-        pytest.fail("no mypy hook found")
-
-    for entry in extras:
+    for entry in _mypy_hook_dependencies(pre_commit_config):
         match = PIN.match(entry)
         assert match, f"mypy hook dependency {entry!r} is not pinned exactly"
         name = match["name"].lower()
