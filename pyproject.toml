@@ -1,35 +1,66 @@
 [build-system]
-requires = ["setuptools>=60.0", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "drift-shift-pipeline"
-version = "0.1.0"
-description = "Reproduce insights on label shift and offset correction from ssrn-6052514."
-authors = [
-    { name = "DriftOrShift Team", email = "team@example.com" },
-]
+description = "Label shift vs. concept drift: Bayes-optimal offset correction, calibration, and drift diagnostics."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Diogo Ribeiro", email = "hansolo.dj@gmail.com" }]
+maintainers = [{ name = "Diogo Ribeiro", email = "hansolo.dj@gmail.com" }]
+keywords = [
+    "label-shift",
+    "concept-drift",
+    "prior-shift",
+    "calibration",
+    "machine-learning",
+    "reproducible-research",
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
 dependencies = [
-    "numpy",
-    "scikit-learn",
-    "pandas",
-    "matplotlib",
-    "pyyaml",
+    "numpy>=1.23",
+    "scikit-learn>=1.2",
+    "pandas>=1.5",
+    "matplotlib>=3.6",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
+# Dev tooling is pinned exactly: an unpinned `ruff`/`mypy` means a new release
+# can turn CI red without a single line of project code changing.
 dev = [
-    "pytest",
-    "ruff",
-    "mypy",
+    "black==26.5.1",
+    "build==1.6.1",
+    "mypy==1.20.2",
+    "pandas-stubs==2.3.3.260113",
+    "pre-commit==4.3.0",
+    "pytest==9.1.1",
+    "pytest-cov==6.3.0",
+    "ruff==0.16.1",
+    "types-PyYAML==6.0.12.20250915",
 ]
+
+[project.urls]
+Homepage = "https://github.com/DiogoRibeiro7/drift-shift-pipeline"
+Repository = "https://github.com/DiogoRibeiro7/drift-shift-pipeline"
+Issues = "https://github.com/DiogoRibeiro7/drift-shift-pipeline/issues"
+Changelog = "https://github.com/DiogoRibeiro7/drift-shift-pipeline/blob/main/CHANGELOG.md"
 
 [project.scripts]
 dos-exp1 = "drift_or_shift.experiments.exp1_label_shift_synth:main"
@@ -44,15 +75,103 @@ dos-exp9 = "drift_or_shift.experiments.exp9_covtype_label_shift:main"
 dos-exp10 = "drift_or_shift.experiments.exp10_credit_card_fraud:main"
 dos-exp11 = "drift_or_shift.experiments.exp11_high_variance_medical:main"
 
-[tool.ruff]
-line-length = 88
-
-[tool.mypy]
-files = "src"
-python_version = "3.10"
-ignore_missing_imports = true
-exclude = "src/drift_or_shift/experiments"
+# ---------------------------------------------------------------------------
+# Packaging
+# ---------------------------------------------------------------------------
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["find:"]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.setuptools.dynamic]
+version = { attr = "drift_or_shift.__version__" }
+
+# ---------------------------------------------------------------------------
+# Lint / format
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+src = ["src", "tests", "scripts", "reproduce"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "RET",    # flake8-return
+    "PTH",    # flake8-use-pathlib
+    "DTZ",    # flake8-datetimez
+    "RUF",    # ruff-specific
+]
+ignore = [
+    "E501",   # line length is enforced by the formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B018"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["drift_or_shift", "drift_shift_pipeline", "caliblab", "reproduce"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+# ---------------------------------------------------------------------------
+# Types
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+files = ["src"]
+# NOTE: this is deliberately ahead of `requires-python`. NumPy's bundled stubs
+# use PEP 695 `type` statements, which mypy only parses when python_version is
+# 3.12+, so pinning 3.10 here fails before it checks a single project file.
+# The 3.10 floor is still enforced: ruff runs with target-version = "py310",
+# and CI runs the full test suite on a real 3.10 interpreter.
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+strict_equality = true
+exclude = "^src/drift_or_shift/experiments/"
+
+# ---------------------------------------------------------------------------
+# Tests / coverage
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+filterwarnings = [
+    "error::DeprecationWarning:drift_or_shift.*",
+    "error::DeprecationWarning:caliblab.*",
+]
+
+[tool.coverage.run]
+source = ["drift_or_shift", "caliblab"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    'if __name__ == "__main__":',
+]
