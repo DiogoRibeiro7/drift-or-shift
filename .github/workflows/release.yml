@@ -105,7 +105,7 @@ jobs:
           python tools/changelog_section.py "$VERSION" > release-notes.md
           cat release-notes.md
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: distribution
           path: |
