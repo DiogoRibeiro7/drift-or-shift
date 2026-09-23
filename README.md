@@ -154,6 +154,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branching and PR conventions, and
 | [ROADMAP.md](ROADMAP.md) | Milestones |
 | [FUTURE.md](FUTURE.md) | Candidate extensions |
 | [RELEASE.md](RELEASE.md) | Release checklist |
+| [docs/API.md](docs/API.md) | API reference for the public package |
+| [docs/CLI_USAGE.md](docs/CLI_USAGE.md) | Flags for the helper scripts |
 
 ## Citation
 
@@ -165,7 +167,7 @@ If this code supports academic work, please cite the underlying paper
   author  = {Ribeiro, Diogo},
   title   = {drift-or-shift: label shift, offset correction and drift diagnostics},
   url     = {https://github.com/DiogoRibeiro7/drift-or-shift},
-  version = {0.1.0}
+  version = {0.1.0a1}
 }
 ```
 
