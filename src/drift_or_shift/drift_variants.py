@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import numpy as np
 from numpy.typing import ArrayLike
 from sklearn.neighbors import KernelDensity
@@ -17,7 +15,7 @@ def apply_covariance_shift(covariance: ArrayLike, scale: float) -> np.ndarray:
     return cov * float(scale)
 
 
-def shift_mean_vector(mean: Sequence[float], delta: Sequence[float]) -> np.ndarray:
+def shift_mean_vector(mean: ArrayLike, delta: ArrayLike) -> np.ndarray:
     """Shift a mean vector to create feature-space drift."""
     mean_arr = np.asarray(mean, dtype=float)
     delta_arr = np.asarray(delta, dtype=float)
@@ -27,7 +25,7 @@ def shift_mean_vector(mean: Sequence[float], delta: Sequence[float]) -> np.ndarr
 
 
 def inject_label_noise(
-    labels: Sequence[int], flip_prob: float, rng: np.random.Generator
+    labels: ArrayLike, flip_prob: float, rng: np.random.Generator
 ) -> np.ndarray:
     """Flip a fraction of binary labels to simulate annotation noise."""
     if not 0 <= flip_prob <= 1:
@@ -60,7 +58,7 @@ def density_ratio_shift(
     return np.maximum(ratio, 0.0)
 
 
-def drift_score_from_ratio(ratio: Sequence[float]) -> float:
+def drift_score_from_ratio(ratio: ArrayLike) -> float:
     """Return a simple drift score from density ratios."""
     arr = np.asarray(ratio, dtype=float)
     if arr.size == 0:

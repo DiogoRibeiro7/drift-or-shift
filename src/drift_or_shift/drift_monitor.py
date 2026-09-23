@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 
 def _ks_statistic(reference: np.ndarray, target: np.ndarray) -> float:
@@ -81,8 +82,8 @@ def multivariate_projection_ks(
 
 
 def univariate_feature_stats(
-    X_ref: Sequence[Sequence[float]] | np.ndarray,
-    X_target: Sequence[Sequence[float]] | np.ndarray,
+    X_ref: ArrayLike,
+    X_target: ArrayLike,
 ) -> list[dict]:
     """Return per-feature drift statistics between reference and target arrays."""
     ref_arr = np.asarray(X_ref, dtype=float)

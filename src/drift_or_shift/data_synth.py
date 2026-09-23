@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import cast
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 
 def default_mu0(d: int) -> np.ndarray:
@@ -21,7 +22,7 @@ def default_mu1(d: int) -> np.ndarray:
 
 
 def concept_drift_mu1(
-    mu1: Sequence[float], shift_dim: int = 5, delta: float = 0.5
+    mu1: ArrayLike, shift_dim: int = 5, delta: float = 0.5
 ) -> np.ndarray:
     """Return mu1 shifted along one dimension to simulate concept drift."""
     mu_arr = np.asarray(mu1, dtype=float)
@@ -51,8 +52,8 @@ def make_gaussian_binary(
     n: int,
     d: int,
     pi: float,
-    mu0: Sequence[float],
-    mu1: Sequence[float],
+    mu0: ArrayLike,
+    mu1: ArrayLike,
     sigma: float | np.ndarray,
     rng: np.random.Generator,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -105,8 +106,8 @@ def make_multimodal_binary(
     n: int,
     d: int,
     pi: float,
-    components_neg: Sequence[tuple[Sequence[float], float]],
-    components_pos: Sequence[tuple[Sequence[float], float]],
+    components_neg: Sequence[tuple[ArrayLike, float]],
+    components_pos: Sequence[tuple[ArrayLike, float]],
     sigma: float | np.ndarray,
     rng: np.random.Generator,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -133,7 +134,7 @@ def make_multimodal_binary(
 
 
 def _prep_mixture(
-    components: Sequence[tuple[Sequence[float], float]], d: int
+    components: Sequence[tuple[ArrayLike, float]], d: int
 ) -> tuple[list[np.ndarray], np.ndarray]:
     if not components:
         raise ValueError("At least one mixture component is required.")

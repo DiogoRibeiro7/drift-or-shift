@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import numpy as np
+from numpy.typing import ArrayLike
 from sklearn.metrics import auc, precision_recall_curve, roc_auc_score
 
 
 def risk_cost_sensitive(
-    y_true: Sequence[int],
-    y_pred: Sequence[int],
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
     c10: float,
     c01: float,
 ) -> float:
@@ -26,20 +25,20 @@ def risk_cost_sensitive(
     return float((c10 * fn + c01 * fp) / len(y_true_arr))
 
 
-def roc_auc(y_true: Sequence[int], scores: Sequence[float]) -> float:
+def roc_auc(y_true: ArrayLike, scores: ArrayLike) -> float:
     """Wrap sklearn ROC AUC with a consistent signature."""
     return float(roc_auc_score(y_true, scores))
 
 
-def pr_auc(y_true: Sequence[int], scores: Sequence[float]) -> float:
+def pr_auc(y_true: ArrayLike, scores: ArrayLike) -> float:
     """Compute PR AUC using the precision-recall curve."""
     precision, recall, _ = precision_recall_curve(y_true, scores)
     return float(auc(recall, precision))
 
 
 def oracle_threshold_min_risk(
-    y_true: Sequence[int],
-    scores: Sequence[float],
+    y_true: ArrayLike,
+    scores: ArrayLike,
     c10: float,
     c01: float,
 ) -> tuple[float, float]:

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The public API rejected the array types it is actually called with.**
+  Every helper was annotated `Sequence[float]` / `Sequence[int]` while being
+  called throughout the experiments with NumPy arrays and pandas Series. Since
+  the package ships `py.typed`, that narrowness reached downstream users too:
+  passing a NumPy array to a NumPy library produced a type error. Widened to
+  `numpy.typing.ArrayLike`, already the convention in `calibration` and
+  `drift_variants`. This removed 165 type errors, all of them `arg-type`.
+- **`plot_auc_pr_vs_prevalence` warned on every draw.** It built its panels
+  with `sharex=True` and then switched them to a log scale, which makes
+  matplotlib attempt a non-positive xlim. Both panels plot the same
+  prevalences, so their limits are identical without sharing.
 - **The distribution could not be built at all.** `tool.setuptools.packages` was
   set to the literal string `"find:"`, which modern setuptools rejects as an
   invalid package name. `pip install .` failed outright and `pip install -e .`
@@ -32,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `drift_or_shift.experiments` is now type-checked. The package was excluded
+  from mypy entirely, leaving eleven modules unchecked; with the annotations
+  corrected the exclusion is gone and mypy covers 28 files instead of 14.
+- `tests/test_array_like_api.py` pins the runtime half of the array-like
+  contract, plus a guard that the plot helpers draw without warnings.
 - Test coverage raised from 44% to 89% (48 tests to 153).
   - `tests/test_experiments_cli.py` drives all eleven experiments through
     their real command line. The nine offline experiments were previously at

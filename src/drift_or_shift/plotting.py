@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import matplotlib.pyplot as plt
+from numpy.typing import ArrayLike
 
 
 def plot_risk_vs_prevalence(
-    pi_tests: Sequence[float],
-    risk_none: Sequence[float],
-    risk_offset: Sequence[float],
-    risk_oracle: Sequence[float],
+    pi_tests: ArrayLike,
+    risk_none: ArrayLike,
+    risk_offset: ArrayLike,
+    risk_oracle: ArrayLike,
     *,
     title: str | None = None,
 ):
@@ -31,14 +30,18 @@ def plot_risk_vs_prevalence(
 
 
 def plot_auc_pr_vs_prevalence(
-    pi_tests: Sequence[float],
-    auc_scores: Sequence[float],
-    pr_auc_scores: Sequence[float],
+    pi_tests: ArrayLike,
+    auc_scores: ArrayLike,
+    pr_auc_scores: ArrayLike,
     *,
     title: str | None = None,
 ):
     """Plot AUC and PR-AUC dependence on prevalence."""
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharex=True)
+    # Not sharex=True: sharing the axis while switching it to a log scale
+    # makes matplotlib attempt a non-positive xlim and emit a warning on
+    # every draw. Both panels plot the same prevalences, so their limits
+    # come out identical anyway.
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
     ax_auc, ax_pr = axes
     ax_auc.plot(pi_tests, auc_scores, marker="o")
     ax_auc.set_xscale("log")
@@ -57,7 +60,7 @@ def plot_auc_pr_vs_prevalence(
 
 
 def plot_ess_vs_alpha(
-    alpha: Sequence[float], ess_fraction: Sequence[float], *, title: str | None = None
+    alpha: ArrayLike, ess_fraction: ArrayLike, *, title: str | None = None
 ):
     """Plot effective sample size fraction versus alpha."""
     fig, ax = plt.subplots()
