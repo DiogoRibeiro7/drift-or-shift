@@ -64,3 +64,10 @@ Thumbs.db
 results/
 logs/
 reproduce/results/
+
+# Default filenames produced by scripts/aggregate_results.py and
+# scripts/drift_alerts.py. Curated artifacts are added deliberately under an
+# explicit --output/--figure name; see reports/README.md.
+reports/results_dashboard_*.md
+reports/best_risk_*.png
+reports/drift_alerts.csv
