@@ -21,6 +21,7 @@ from __future__ import annotations
 import importlib
 import json
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -268,64 +269,81 @@ def test_exp4_matches_the_published_figures(exp4) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Experiment 5 -- breast cancer, which is NOT reproducible across platforms
+# Experiment 5 -- breast cancer
 # ---------------------------------------------------------------------------
 
-EXP5_UNSTABLE = (
-    "exp5 fits logistic regression on raw, unscaled breast-cancer features "
-    "(feature means span 0.004 to 880), so LBFGS exhausts max_iter without "
-    "converging and the coefficients depend on the platform's BLAS. Its "
-    "published figures reproduce exactly on Windows and differ on Linux and "
-    "macOS -- at pi_test=0.5 the sign of the offset's effect even flips. "
-    "Pinning those figures is only meaningful once the fit converges; see "
-    "test_exp5_does_not_converge_on_raw_features."
-)
 
-
-@pytest.fixture(scope="module")
-def exp5(tmp_path_factory, request):
+def _run_exp5(tmp_path_factory, request, seeds: list[str], slug: str) -> dict:
     monkeypatch = pytest.MonkeyPatch()
     request.addfinalizer(monkeypatch.undo)
-    args = ["--pi-train", "0.2", "--seeds", "0", "1", "2", "3", "4"]
+    args = ["--pi-train", "0.2", "--seeds", *seeds]
     payload = _run(
         monkeypatch,
-        tmp_path_factory.mktemp("exp5"),
+        tmp_path_factory.mktemp(slug),
         "exp5_realdata_breast_cancer",
         args,
     )
     return payload["aggregated"]
 
 
-def test_exp5_does_not_converge_on_raw_features() -> None:
-    """Pin the cause of exp5's irreproducibility so it stays visible.
+@pytest.fixture(scope="module")
+def exp5(tmp_path_factory, request):
+    """The documented five-seed reference run."""
+    return _run_exp5(tmp_path_factory, request, [str(s) for s in range(5)], "exp5")
 
-    This is the defect behind every skipped assertion below. Standardizing the
-    features makes the same fit converge in roughly twenty iterations, which
-    would make the experiment reproducible -- but it would also change exp5's
-    published numbers, so it is a call for the maintainers rather than a
-    silent re-baseline.
+
+@pytest.fixture(scope="module")
+def exp5_many_seeds(tmp_path_factory, request):
+    """Twenty seeds, where real-data variance no longer swamps the effect.
+
+    At five seeds the per-prevalence differences at mid-grid are smaller than
+    the seed-to-seed spread, so the qualitative claim is checked here instead.
+    """
+    return _run_exp5(tmp_path_factory, request, [str(s) for s in range(20)], "exp5many")
+
+
+def test_exp5_fit_converges() -> None:
+    """Regression guard for the defect that made this experiment unreproducible.
+
+    Breast-cancer feature means span 0.004 to 880. Fitting on the raw scale made
+    LBFGS exhaust max_iter, so the coefficients -- and every risk derived from
+    them -- depended on the platform's BLAS, and Linux, macOS and Windows
+    disagreed on the results. Standardizing fixes it.
     """
     data = load_breast_cancer()
     X_train, _, y_train, _ = train_test_split(
         data.data, data.target, test_size=0.5, stratify=data.target, random_state=0
     )
-    rng = np.random.default_rng(1)
-    X, y = resample_to_prevalence(X_train, y_train, 0.2, rng)
+    X, y = resample_to_prevalence(X_train, y_train, 0.2, np.random.default_rng(1))
 
     raw = fit_logistic_regression(X, y, rng=np.random.default_rng(1))
     scaled = fit_logistic_regression(
-        StandardScaler().fit_transform(X), y, rng=np.random.default_rng(1)
+        StandardScaler().fit_transform(X),
+        y,
+        rng=np.random.default_rng(1),
+        max_iter=2000,
     )
 
-    assert int(raw.n_iter_[0]) >= raw.max_iter, (
-        "exp5's fit now converges on raw features; if that is intentional, "
-        "re-derive RESULTS_DIGEST.md and re-enable the skipped tests below"
-    )
-    assert int(scaled.n_iter_[0]) < 100, "standardizing should converge quickly"
+    assert int(raw.n_iter_[0]) >= raw.max_iter, "raw features used to be the problem"
+    assert int(scaled.n_iter_[0]) < 100, "scaled fit must converge quickly"
+
+
+def test_exp5_run_emits_no_convergence_warnings(monkeypatch, tmp_path) -> None:
+    """The experiment itself, not just an isolated fit, must converge."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _run(
+            monkeypatch,
+            tmp_path,
+            "exp5_realdata_breast_cancer",
+            ["--pi-train", "0.2", "--seeds", "0", "--pi-tests", "0.05", "0.2"],
+        )
+
+    offenders = [str(w.message) for w in caught if "converge" in str(w.message).lower()]
+    assert not offenders, f"exp5 no longer converges: {offenders}"
 
 
 def test_exp5_oracle_remains_a_lower_bound(exp5) -> None:
-    """Structural, so it holds regardless of where the optimizer stopped."""
     oracle = _by_prevalence(exp5, "risk_oracle_mean")
     none = _by_prevalence(exp5, "risk_none_mean")
 
@@ -333,33 +351,34 @@ def test_exp5_oracle_remains_a_lower_bound(exp5) -> None:
         assert oracle[pi] <= none[pi] + 1e-9, f"oracle lost at pi_test={pi}"
 
 
-def test_exp5_offset_helps_under_the_strongest_shift(exp5) -> None:
-    """At pi_test=0.01 the offset is about -3.2 logits, which dominates the
-    coefficient noise that makes the mid-grid results platform-dependent."""
-    none = _by_prevalence(exp5, "risk_none_mean")
-    offset = _by_prevalence(exp5, "risk_offset_mean")
+def test_exp5_offset_helps_at_every_prevalence(exp5_many_seeds) -> None:
+    """With the fit converged, real data behaves like the theory predicts.
 
-    assert offset[0.01] < none[0.01]
+    The earlier claim that the offset *hurt* at pi_test=0.5 was an artifact of
+    the unconverged optimizer, not a limitation of the method.
+    """
+    none = _by_prevalence(exp5_many_seeds, "risk_none_mean")
+    offset = _by_prevalence(exp5_many_seeds, "risk_offset_mean")
+
+    for pi in none:
+        assert offset[pi] <= none[pi] + 1e-9, f"offset lost at pi_test={pi}"
 
 
-@pytest.mark.skip(reason=EXP5_UNSTABLE)
+def test_exp5_needs_no_correction_at_the_training_prior(exp5_many_seeds) -> None:
+    none = _by_prevalence(exp5_many_seeds, "risk_none_mean")
+    offset = _by_prevalence(exp5_many_seeds, "risk_offset_mean")
+
+    assert offset[0.2] == pytest.approx(none[0.2], abs=1e-9)
+
+
 def test_exp5_matches_the_published_figures(exp5) -> None:
     none = _by_prevalence(exp5, "risk_none_mean")
     offset = _by_prevalence(exp5, "risk_offset_mean")
     oracle = _by_prevalence(exp5, "risk_oracle_mean")
 
-    assert none[0.01] == pytest.approx(0.0246, abs=TOL)
-    assert offset[0.01] == pytest.approx(0.0091, abs=TOL)
-    assert oracle[0.01] == pytest.approx(0.0035, abs=TOL)
-    assert none[0.5] == pytest.approx(0.0484, abs=TOL)
-    assert offset[0.5] == pytest.approx(0.0519, abs=TOL)
-    assert oracle[0.5] == pytest.approx(0.0421, abs=TOL)
-
-
-@pytest.mark.skip(reason=EXP5_UNSTABLE)
-def test_exp5_offset_is_worse_at_the_balanced_prevalence(exp5) -> None:
-    """Reproduces on Windows, but not on Linux, where the offset wins here."""
-    none = _by_prevalence(exp5, "risk_none_mean")
-    offset = _by_prevalence(exp5, "risk_offset_mean")
-
-    assert offset[0.5] > none[0.5]
+    assert none[0.01] == pytest.approx(0.0449, abs=TOL)
+    assert offset[0.01] == pytest.approx(0.0105, abs=TOL)
+    assert oracle[0.01] == pytest.approx(0.0042, abs=TOL)
+    assert none[0.5] == pytest.approx(0.0540, abs=TOL)
+    assert offset[0.5] == pytest.approx(0.0421, abs=TOL)
+    assert oracle[0.5] == pytest.approx(0.0351, abs=TOL)

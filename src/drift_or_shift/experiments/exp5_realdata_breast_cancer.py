@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 from drift_or_shift import (
     DRIFT_FEATURE_METRICS,
@@ -61,7 +62,15 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         X_train, y_train = resample_to_prevalence(
             X_train_full, y_train_full, config.pi_train, rng_train
         )
-        model = fit_logistic_regression(X_train, y_train, rng=rng_train)
+        # Breast-cancer feature means span roughly 0.004 to 880. Fitting on
+        # the raw scale makes LBFGS exhaust max_iter without converging, so the
+        # coefficients -- and every risk derived from them -- depend on the
+        # platform's BLAS. The scaler is fit on the training split only, so no
+        # test information leaks into it. This matches exp10.
+        scaler = StandardScaler().fit(X_train)
+        model = fit_logistic_regression(
+            scaler.transform(X_train), y_train, rng=rng_train, max_iter=2000
+        )
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
 
         for pi_test in config.pi_tests:
@@ -69,7 +78,7 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
             X_test, y_test = resample_to_prevalence(
                 X_test_full, y_test_full, pi_test, rng_test
             )
-            scores = predict_logits(model, X_test)
+            scores = predict_logits(model, scaler.transform(X_test))
             decisions_none = (scores >= threshold).astype(int)
             risk_none = risk_cost_sensitive(
                 y_test, decisions_none, config.c10, config.c01

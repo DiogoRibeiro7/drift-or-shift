@@ -9,17 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Experiment 5 is not reproducible across platforms, and now says so.** It
-  fits logistic regression on raw, unscaled breast-cancer features whose means
-  span `0.004` to `880`, so LBFGS exhausts `max_iter` without converging and the
-  coefficients depend on the platform's BLAS. Its published figures reproduce
-  exactly on Windows and differ on Linux and macOS -- at `pi_test=0.5` even the
-  sign of the offset's effect flips. The convergence warnings that earlier
-  revisions of the digest mentioned in passing were the symptom. Standardizing
-  the features makes the same fit converge in about twenty iterations, but that
-  would change Exp5's published numbers, so it is left as a maintainer decision;
-  `test_exp5_does_not_converge_on_raw_features` pins the cause meanwhile.
-  Exp1-Exp4 are stable on every platform CI covers.
+- **Experiments 5 and 9 fitted an unconverged model, and their published
+  numbers are re-derived.** Both fit logistic regression on raw, unscaled
+  real-world features -- breast-cancer means span `0.004` to `880`, Covertype's
+  span `0` to `2959` -- so LBFGS exhausted `max_iter` without ever converging.
+  The coefficients, and every risk derived from them, depended on the platform's
+  BLAS: the figures reproduced exactly on Windows and differed on Linux and
+  macOS, where at `pi_test=0.5` even the sign of the offset's effect flipped.
+  Both now standardize features on the training split only, matching what Exp10
+  already did, and converge in tens of iterations.
+
+  **This changes published results.** Exp5's reference figures move (for example
+  `risk_offset` at `pi_test=0.01` from `0.0091` to `0.0105`, and at `pi_test=0.5`
+  from `0.0519` to `0.0421`), and one previously documented finding is
+  withdrawn: that offset correction is *worse than doing nothing* at
+  `pi_test=0.5` on real data. That was an artifact of the unconverged fit, not a
+  limitation of the method. With the fit converged the offset helps at every
+  prevalence, as the theory predicts.
 - **`RESULTS_DIGEST.md` quoted a ROC AUC band that excluded its own data.** It
   claimed `[0.94, 0.96]`, but Exp2 produces `0.9382` at `pi_test=0.1`. The
   observed range is `0.938`-`0.957`.

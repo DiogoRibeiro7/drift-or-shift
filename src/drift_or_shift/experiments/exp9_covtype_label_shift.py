@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_covtype
+from sklearn.preprocessing import StandardScaler
 
 from drift_or_shift import (
     DEFAULT_COSTS,
@@ -71,7 +72,13 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         X_train, y_train = resample_to_prevalence(
             X_train_raw, y_train_raw, config.pi_train, rng
         )
-        model = fit_logistic_regression(X_train, y_train, rng=rng)
+        # Covertype mixes metre-scale elevations with 0/1 indicators, so the
+        # raw scale makes LBFGS exhaust max_iter without converging. Fit on the
+        # training split only, as exp10 does.
+        scaler = StandardScaler().fit(X_train)
+        model = fit_logistic_regression(
+            scaler.transform(X_train), y_train, rng=rng, max_iter=2000
+        )
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
 
         for pi_test in config.pi_tests:
@@ -80,7 +87,7 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
             X_test, y_test = resample_to_prevalence(
                 X_test_raw, y_test_raw, pi_test, rng
             )
-            scores = predict_logits(model, X_test)
+            scores = predict_logits(model, scaler.transform(X_test))
             decisions_none = (scores >= threshold).astype(int)
             risk_none = risk_cost_sensitive(
                 y_test, decisions_none, config.c10, config.c01
