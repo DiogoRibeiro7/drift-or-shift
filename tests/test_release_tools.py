@@ -23,7 +23,7 @@ sys.path.insert(0, str(TOOLS))
 
 from changelog_section import extract_section  # noqa: E402
 from check_sarif import collect_results, describe  # noqa: E402
-from print_version import read_version  # noqa: E402
+from print_version import is_prerelease, read_version  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # print_version
@@ -257,3 +257,55 @@ def test_check_sarif_rejects_malformed_json(tmp_path: Path) -> None:
 
     assert result.returncode == 2
     assert "not valid SARIF" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# prerelease detection
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("version", "expected"),
+    [
+        ("0.1.0", False),
+        ("1.2.3", False),
+        ("10.0.0", False),
+        ("1.0.0.post1", False),
+        ("0.1.0a1", True),
+        ("0.1.0b2", True),
+        ("0.1.0rc1", True),
+        ("0.1.0.dev1", True),
+        ("2.0.0alpha3", True),
+        ("2.0.0beta1", True),
+    ],
+)
+def test_prerelease_detection(version: str, expected: bool) -> None:
+    """Drives whether the GitHub release is flagged as a pre-release.
+
+    Getting this wrong in the permissive direction would publish an alpha as
+    the repository's latest stable release.
+    """
+    assert is_prerelease(version) is expected
+
+
+def test_prerelease_flag_matches_the_current_version() -> None:
+    result = subprocess.run(
+        [sys.executable, str(TOOLS / "print_version.py"), "--prerelease"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    expected = "true" if is_prerelease(drift_or_shift.__version__) else "false"
+    assert result.stdout.strip() == expected
+
+
+def test_print_version_rejects_unknown_arguments() -> None:
+    result = subprocess.run(
+        [sys.executable, str(TOOLS / "print_version.py"), "--nope"],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "usage" in result.stderr

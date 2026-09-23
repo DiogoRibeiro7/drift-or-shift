@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.check.outputs.version }}
+      prerelease: ${{ steps.check.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -46,6 +47,7 @@ jobs:
             exit 1
           fi
           echo "version=$pkg" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$(python tools/print_version.py --prerelease)" >> "$GITHUB_OUTPUT"
 
       - name: CHANGELOG must document this version
         shell: bash
@@ -130,12 +132,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag || github.ref_name }}
           REPO: ${{ github.repository }}
+          PRERELEASE: ${{ needs.verify.outputs.prerelease }}
         run: |
           set -euo pipefail
+          flags=()
+          # An alpha must not present itself as the latest stable release.
+          if [ "$PRERELEASE" = "true" ]; then
+            flags+=(--prerelease)
+          fi
           gh release create "$TAG" dist/* \
             --repo "$REPO" \
             --title "$TAG" \
-            --notes-file release-notes.md
+            --notes-file release-notes.md \
+            "${flags[@]}"
 
   pypi:
     name: Publish to PyPI
