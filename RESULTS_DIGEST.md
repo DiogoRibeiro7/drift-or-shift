@@ -13,6 +13,17 @@ regenerate it.
 configurations below on every CI build and checks both the published figures
 and the qualitative claims, so this digest cannot silently go stale.
 
+**Experiment 5 is the exception, and it is a known defect.** Its figures
+reproduce exactly on Windows and differ on Linux and macOS, because it fits
+logistic regression on raw, unscaled features whose means span `0.004` to
+`880`. LBFGS exhausts `max_iter` without converging, so the coefficients --
+and every number derived from them -- depend on the platform's BLAS.
+Standardizing the features makes the same fit converge in about twenty
+iterations. That would make Exp5 reproducible but would also change its
+published numbers, so it is left as a maintainer decision; the Exp5
+assertions are skipped until then. Exp1-Exp4 are stable on every platform
+CI covers.
+
 ## Experiment 1 – Synthetic label shift with offset correction
 
 - **Config & provenance:** `n_train=2000`, `n_test=2000`, `d=6`, `pi_train=0.2`, `seeds=[0,1,2,3,4]`, symmetric costs, timestamp `2026-01-14T13:26:26.879652`. Table: `results/exp1_label_shift_synth/20260114_132626/tables/exp1_label_shift_synth.csv` (per-prevalence mean/std risk). Figure: `results/exp1_label_shift_synth/20260114_132626/figures/exp1_label_shift_synth.png` (risk vs. prevalence curves).
@@ -42,13 +53,16 @@ and the qualitative claims, so this digest cannot silently go stale.
 ## Experiment 5 – Breast cancer label shift replication
 
 - **Config & provenance:** Stratified train/test split of `sklearn.datasets.load_breast_cancer`, resampled to `pi_train=0.2`, `pi_tests` as above, `seeds=[0,1,2,3,4]`, timestamp `2026-01-14T13:28:15.064888`. Table: `results/exp5_realdata_breast_cancer/20260114_132814/tables/exp5_realdata_breast_cancer.csv`. Figure: `results/exp5_realdata_breast_cancer/20260114_132814/figures/exp5_realdata_breast_cancer.png`.
-- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0246`, `risk_offset=0.0091`, `risk_oracle=0.0035`; at `pi_test=0.5`, `risk_none=0.0484`, `risk_offset=0.0519`, `risk_oracle=0.0421`. Offset correction closes the gap for `pi_test` **below** the training prior, but at
-  `pi_test=0.5` it is **worse than doing nothing** (`0.0519` vs `0.0484`). Convergence
-  warnings from LBFGS (logged during the run) also suggest normalizing features or
-  raising `max_iter` for clinical splits.
-- **Observation/deviation:** A genuine exception to the synthetic result. On real,
-  finite data with an imperfectly calibrated model, the theoretically free offset can
-  overshoot: correcting from `pi_train=0.2` up to `pi_test=0.5` increases risk here.
-  The synthetic experiments never show this because the model is well specified there.
-  Pinned by `test_exp5_offset_is_worse_at_the_balanced_prevalence` so it cannot quietly
-  disappear, or quietly become a universal claim.
+- **Key metrics (Windows; see the caveat above):** At `pi_test=0.01`,
+  `risk_none=0.0246`, `risk_offset=0.0091`, `risk_oracle=0.0035`; at `pi_test=0.5`,
+  `risk_none=0.0484`, `risk_offset=0.0519`, `risk_oracle=0.0421`. Offset correction
+  helps most under the strongest shift (`pi_test=0.01`), which holds on every
+  platform. The mid-grid and `pi_test=0.5` figures do **not** reproduce elsewhere:
+  on Linux the offset wins at `pi_test=0.5` rather than losing. Treat these numbers
+  as one platform's run of a non-converged fit, not as a result.
+- **Observation/deviation:** The LBFGS convergence warnings that earlier revisions of
+  this digest noted in passing are not cosmetic -- they are the reason this experiment
+  is not reproducible. Until the features are scaled, no conclusion should be drawn
+  from Exp5 about whether offset correction helps or hurts at a given prevalence;
+  different platforms disagree on the sign. `test_exp5_does_not_converge_on_raw_features`
+  pins the cause so it stays visible.

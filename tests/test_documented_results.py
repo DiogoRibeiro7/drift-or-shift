@@ -23,9 +23,15 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
+from drift_or_shift.data_synth import resample_to_prevalence
 from drift_or_shift.ess import ess_fraction
+from drift_or_shift.models import fit_logistic_regression
 
 # Tolerance for published figures. See the module docstring.
 TOL = 5e-3
@@ -262,8 +268,18 @@ def test_exp4_matches_the_published_figures(exp4) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Experiment 5 -- breast cancer, where the offset has a known exception
+# Experiment 5 -- breast cancer, which is NOT reproducible across platforms
 # ---------------------------------------------------------------------------
+
+EXP5_UNSTABLE = (
+    "exp5 fits logistic regression on raw, unscaled breast-cancer features "
+    "(feature means span 0.004 to 880), so LBFGS exhausts max_iter without "
+    "converging and the coefficients depend on the platform's BLAS. Its "
+    "published figures reproduce exactly on Windows and differ on Linux and "
+    "macOS -- at pi_test=0.5 the sign of the offset's effect even flips. "
+    "Pinning those figures is only meaningful once the fit converges; see "
+    "test_exp5_does_not_converge_on_raw_features."
+)
 
 
 @pytest.fixture(scope="module")
@@ -280,40 +296,53 @@ def exp5(tmp_path_factory, request):
     return payload["aggregated"]
 
 
-def test_exp5_offset_helps_under_genuine_label_shift(exp5) -> None:
-    none = _by_prevalence(exp5, "risk_none_mean")
-    offset = _by_prevalence(exp5, "risk_offset_mean")
+def test_exp5_does_not_converge_on_raw_features() -> None:
+    """Pin the cause of exp5's irreproducibility so it stays visible.
 
-    for pi in (0.01, 0.05, 0.1):
-        assert offset[pi] <= none[pi] + 1e-9, f"offset lost at pi_test={pi}"
-
-
-def test_exp5_offset_is_worse_at_the_balanced_prevalence(exp5) -> None:
-    """A real, documented exception, not a bug.
-
-    The synthetic experiments show the offset never losing, because the model
-    is well specified there. On breast cancer at pi_test=0.5 -- the largest
-    upward shift from pi_train=0.2 -- the correction overshoots and risk gets
-    worse. RESULTS_DIGEST.md reports the numbers; this pins the caveat so it
-    cannot quietly disappear or quietly become universal.
+    This is the defect behind every skipped assertion below. Standardizing the
+    features makes the same fit converge in roughly twenty iterations, which
+    would make the experiment reproducible -- but it would also change exp5's
+    published numbers, so it is a call for the maintainers rather than a
+    silent re-baseline.
     """
-    none = _by_prevalence(exp5, "risk_none_mean")
-    offset = _by_prevalence(exp5, "risk_offset_mean")
-
-    assert offset[0.5] > none[0.5], (
-        "the documented exception at pi_test=0.5 no longer reproduces; "
-        "RESULTS_DIGEST.md needs updating"
+    data = load_breast_cancer()
+    X_train, _, y_train, _ = train_test_split(
+        data.data, data.target, test_size=0.5, stratify=data.target, random_state=0
     )
+    rng = np.random.default_rng(1)
+    X, y = resample_to_prevalence(X_train, y_train, 0.2, rng)
+
+    raw = fit_logistic_regression(X, y, rng=np.random.default_rng(1))
+    scaled = fit_logistic_regression(
+        StandardScaler().fit_transform(X), y, rng=np.random.default_rng(1)
+    )
+
+    assert int(raw.n_iter_[0]) >= raw.max_iter, (
+        "exp5's fit now converges on raw features; if that is intentional, "
+        "re-derive RESULTS_DIGEST.md and re-enable the skipped tests below"
+    )
+    assert int(scaled.n_iter_[0]) < 100, "standardizing should converge quickly"
 
 
 def test_exp5_oracle_remains_a_lower_bound(exp5) -> None:
+    """Structural, so it holds regardless of where the optimizer stopped."""
     oracle = _by_prevalence(exp5, "risk_oracle_mean")
     none = _by_prevalence(exp5, "risk_none_mean")
 
     for pi in oracle:
-        assert oracle[pi] <= none[pi] + 1e-9
+        assert oracle[pi] <= none[pi] + 1e-9, f"oracle lost at pi_test={pi}"
 
 
+def test_exp5_offset_helps_under_the_strongest_shift(exp5) -> None:
+    """At pi_test=0.01 the offset is about -3.2 logits, which dominates the
+    coefficient noise that makes the mid-grid results platform-dependent."""
+    none = _by_prevalence(exp5, "risk_none_mean")
+    offset = _by_prevalence(exp5, "risk_offset_mean")
+
+    assert offset[0.01] < none[0.01]
+
+
+@pytest.mark.skip(reason=EXP5_UNSTABLE)
 def test_exp5_matches_the_published_figures(exp5) -> None:
     none = _by_prevalence(exp5, "risk_none_mean")
     offset = _by_prevalence(exp5, "risk_offset_mean")
@@ -325,3 +354,12 @@ def test_exp5_matches_the_published_figures(exp5) -> None:
     assert none[0.5] == pytest.approx(0.0484, abs=TOL)
     assert offset[0.5] == pytest.approx(0.0519, abs=TOL)
     assert oracle[0.5] == pytest.approx(0.0421, abs=TOL)
+
+
+@pytest.mark.skip(reason=EXP5_UNSTABLE)
+def test_exp5_offset_is_worse_at_the_balanced_prevalence(exp5) -> None:
+    """Reproduces on Windows, but not on Linux, where the offset wins here."""
+    none = _by_prevalence(exp5, "risk_none_mean")
+    offset = _by_prevalence(exp5, "risk_offset_mean")
+
+    assert offset[0.5] > none[0.5]

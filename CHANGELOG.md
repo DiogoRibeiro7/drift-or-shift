@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Two documented results contradicted their own numbers.** `RESULTS_DIGEST.md`
-  claimed ROC AUC stays in `[0.94, 0.96]`, but Exp2 produces `0.9382` at
-  `pi_test=0.1`. It also said Exp5's offset correction "closes the gap under
-  label shift" while its own table shows the offset losing to no correction at
-  `pi_test=0.5` (`0.0519` vs `0.0484`) - a real limitation of the method on
-  finite, imperfectly calibrated real data, now stated plainly and pinned by a
-  test rather than glossed over. `REPORT.md` repeated the same claim.
+- **Experiment 5 is not reproducible across platforms, and now says so.** It
+  fits logistic regression on raw, unscaled breast-cancer features whose means
+  span `0.004` to `880`, so LBFGS exhausts `max_iter` without converging and the
+  coefficients depend on the platform's BLAS. Its published figures reproduce
+  exactly on Windows and differ on Linux and macOS -- at `pi_test=0.5` even the
+  sign of the offset's effect flips. The convergence warnings that earlier
+  revisions of the digest mentioned in passing were the symptom. Standardizing
+  the features makes the same fit converge in about twenty iterations, but that
+  would change Exp5's published numbers, so it is left as a maintainer decision;
+  `test_exp5_does_not_converge_on_raw_features` pins the cause meanwhile.
+  Exp1-Exp4 are stable on every platform CI covers.
+- **`RESULTS_DIGEST.md` quoted a ROC AUC band that excluded its own data.** It
+  claimed `[0.94, 0.96]`, but Exp2 produces `0.9382` at `pi_test=0.1`. The
+  observed range is `0.938`-`0.957`.
 - `RESULTS_DIGEST.md` linked artifacts under `results/`, which is regenerated
   output and never committed, so every path was dead in a fresh clone. It now
   explains how to regenerate a run instead.

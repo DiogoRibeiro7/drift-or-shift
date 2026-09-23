@@ -72,10 +72,13 @@ shifts a prior that is no longer the problem. Retraining on the drifted data is
 what lowers risk.
 
 **Exp5 — breast cancer.** Real-data risk per strategy across the prevalence
-grid. Offset correction helps for `pi_test` below the training prior — but at
-`pi_test=0.5` it is **worse than doing nothing** (`0.0519` vs `0.0484`). See the
-caveat below. LBFGS may emit convergence warnings here; scale the features or
-raise `max_iter` if that matters for your run.
+grid. Offset correction helps most under the strongest shift (`pi_test=0.01`).
+**This experiment is not currently reproducible across platforms**: it fits on
+raw, unscaled features whose means span `0.004` to `880`, so LBFGS exhausts
+`max_iter` without converging and the coefficients depend on the platform's
+BLAS. Linux, macOS and Windows disagree, including on the *sign* of the
+offset's effect at `pi_test=0.5`. Standardizing the features makes the fit
+converge in about twenty iterations; see the caveat below.
 
 **Exp6–Exp11.** Calibration under label shift (temperature and isotonic), a
 sweep over drift types, multimodal mixtures, and three higher-dimensional or
@@ -92,15 +95,18 @@ its configuration in `_summary.json`.
 - **Metric choice decides what you can see.** Exp2 shows ROC AUC surviving a
   prevalence shift that PR-AUC registers strongly. Reporting only the invariant
   metric would hide the shift entirely.
-- **The correction is not unconditionally free.** On real, finite data with an
-  imperfectly calibrated model, the offset can overshoot: Exp5 at `pi_test=0.5`
-  ends up worse than no correction. The synthetic experiments never show this,
-  because the model there is well specified. Treat the synthetic result as the
-  idealized case and check the correction on your own data.
+- **An unconverged fit is not a result.** Exp5's numbers come from a logistic
+  regression that stops at `max_iter` rather than at an optimum, which makes them
+  platform-dependent. The fix is standard — standardize the features — but it
+  changes Exp5's published figures, so it is left as a maintainer decision rather
+  than applied silently. Until then, draw conclusions about real-data behaviour
+  from Exp1-Exp4, which are stable everywhere CI runs.
 
 ## Verification
 
 `tests/test_documented_results.py` re-runs the configurations behind
 `RESULTS_DIGEST.md` on every CI build and asserts both the published figures and
-the qualitative claims above — including the Exp5 exception, so it cannot quietly
-disappear or quietly become a universal claim.
+the qualitative claims above. Exp1-Exp4 are enforced on Linux, macOS and Windows.
+Exp5's figures are skipped with an explicit reason, and
+`test_exp5_does_not_converge_on_raw_features` pins the defect that makes them
+unreliable, so it cannot be forgotten.
