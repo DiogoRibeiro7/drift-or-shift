@@ -96,6 +96,13 @@ def aggregate_mean_std(
 
 
 def feature_drift_metrics(X_ref: np.ndarray, X_target: np.ndarray) -> dict[str, float]:
+    """Return every feature-drift statistic in ``DRIFT_FEATURE_METRICS``.
+
+    Combines the per-feature summaries with the covariance, correlation and
+    random-projection measures, so an experiment can record the whole set in
+    one call. The keys match the threshold names used by
+    ``drift_or_shift.reporting.detect_drift_alerts``.
+    """
     stats = univariate_feature_stats(X_ref, X_target)
     summary = feature_drift_summary(stats)
     summary["feature_covariance_fro_diff"] = covariance_frobenius_diff(X_ref, X_target)
