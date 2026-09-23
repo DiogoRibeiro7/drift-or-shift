@@ -32,6 +32,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Automated releases. Pushing a `v*` tag builds and smoke-tests the
+  distribution and publishes a GitHub Release with notes taken from this file.
+  The workflow refuses to publish a tag that does not match
+  `drift_or_shift.__version__`, or a version with no `CHANGELOG.md` section --
+  the two mistakes a manual `twine upload` checklist is most likely to make.
+  PyPI publishing uses trusted publishing (no stored token) and stays inert
+  until a `pypi` environment is created.
+- `tools/print_version.py` and `tools/changelog_section.py`, the release
+  workflow's logic kept as testable scripts rather than inline YAML, covered by
+  `tests/test_release_tools.py`.
+- A security workflow: CodeQL, a `pip-audit` dependency audit, and `zizmor`
+  linting of the workflows themselves, on push, pull request, and weekly.
+  `tools/check_sarif.py` gates the build on the report's contents, because
+  zizmor exits 0 when asked for SARIF output even when it found problems.
+- Workflow hardening found by zizmor: tag names are no longer interpolated
+  into shell (a code-injection vector), and checkouts no longer persist
+  credentials.
 - Test coverage raised from 44% to 89% (48 tests to 153).
   - `tests/test_experiments_cli.py` drives all eleven experiments through
     their real command line. The nine offline experiments were previously at

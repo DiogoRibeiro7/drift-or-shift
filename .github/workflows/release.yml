@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release from"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify the tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tag must match the packaged version
+        id: check
+        shell: bash
+        # Passed through env rather than interpolated into the script: a tag
+        # name is attacker-controllable and would otherwise be shell code.
+        env:
+          RAW_REF: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          tag="${RAW_REF#v}"
+          pkg="$(python tools/print_version.py)"
+          echo "tag=$tag packaged=$pkg"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Tag v$tag does not match drift_or_shift.__version__ ($pkg). Bump the version, or retag."
+            exit 1
+          fi
+          echo "version=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: CHANGELOG must document this version
+        shell: bash
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          if ! grep -qE "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${VERSION}]' section."
+            exit 1
+          fi
+
+  build:
+    name: Build and smoke-test the distribution
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: |
+          python -m pip install build twine
+          python -m build
+
+      - name: Check metadata
+        run: python -m twine check dist/*
+
+      - name: Install the wheel into a clean environment and run it
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/fresh
+          /tmp/fresh/bin/python -m pip install dist/*.whl
+          /tmp/fresh/bin/python -c "
+          import os, drift_or_shift
+          expected = os.environ['EXPECTED_VERSION']
+          assert drift_or_shift.__version__ == expected, drift_or_shift.__version__
+          print('installed', drift_or_shift.__version__)
+          "
+          /tmp/fresh/bin/dos-exp1 --help > /dev/null
+
+      - name: Extract this version's changelog section
+        shell: bash
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          python tools/changelog_section.py "$VERSION" > release-notes.md
+          cat release-notes.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: |
+            dist/
+            release-notes.md
+          if-no-files-found: error
+
+  github-release:
+    name: Publish the GitHub release
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+
+      - name: Create the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" dist/* \
+            --repo "$REPO" \
+            --title "$TAG" \
+            --notes-file release-notes.md
+
+  pypi:
+    name: Publish to PyPI
+    needs: [verify, build, github-release]
+    runs-on: ubuntu-latest
+    # Inert until a `pypi` environment exists on the repository, so this cannot
+    # fire by accident. To enable: configure PyPI trusted publishing for this
+    # repo, then create the environment. No API token is required.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/drift-shift-pipeline
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distribution
+
+      - name: Keep only the distribution files
+        run: rm -f release-notes.md
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
