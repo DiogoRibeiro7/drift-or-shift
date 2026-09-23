@@ -284,3 +284,149 @@ def test_make_figures_cli(monkeypatch, reproduce_config) -> None:
         "reproduce.scripts.make_figures",
         ["--config", str(reproduce_config)],
     )
+
+
+# ---------------------------------------------------------------------------
+# scripts/aggregate_results.py
+# ---------------------------------------------------------------------------
+
+
+def test_aggregate_results_writes_a_dashboard_and_figure(
+    monkeypatch, tmp_path, results_tree, capsys
+) -> None:
+    output = tmp_path / "dashboard.md"
+    figure = tmp_path / "best_risk.png"
+
+    _run_main(
+        monkeypatch,
+        "aggregate_results",
+        [
+            "--results-dir",
+            str(results_tree),
+            "--output",
+            str(output),
+            "--figure",
+            str(figure),
+            "--drift-output",
+            str(tmp_path / "alerts.csv"),
+        ],
+    )
+
+    assert output.is_file() and figure.is_file()
+    text = output.read_text(encoding="utf-8")
+    assert "exp1_label_shift_synth" in text
+    assert "dashboard written to" in capsys.readouterr().out
+
+
+def test_aggregate_results_reports_an_empty_tree(monkeypatch, tmp_path, capsys) -> None:
+    _run_main(
+        monkeypatch,
+        "aggregate_results",
+        [
+            "--results-dir",
+            str(tmp_path / "nothing"),
+            "--output",
+            str(tmp_path / "d.md"),
+        ],
+    )
+
+    assert "no summaries found" in capsys.readouterr().out
+
+
+def test_aggregate_results_fails_the_build_on_alerts(
+    monkeypatch, tmp_path, results_tree
+) -> None:
+    """`--fail-on-alerts` is the hook CI would use; it must actually exit non-zero."""
+    thresholds = tmp_path / "thresholds.yaml"
+    thresholds.write_text("feature_max_ks: 0.001\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as excinfo:
+        _run_main(
+            monkeypatch,
+            "aggregate_results",
+            [
+                "--results-dir",
+                str(results_tree),
+                "--output",
+                str(tmp_path / "d.md"),
+                "--figure",
+                str(tmp_path / "f.png"),
+                "--drift-output",
+                str(tmp_path / "alerts.csv"),
+                "--threshold-config",
+                str(thresholds),
+                "--fail-on-alerts",
+            ],
+        )
+
+    assert excinfo.value.code == 1
+
+
+# ---------------------------------------------------------------------------
+# scripts/monitor_drift.py
+# ---------------------------------------------------------------------------
+
+
+def _write_csv(path: Path, rows: list[str]) -> Path:
+    path.write_text("x,y\n" + "".join(rows), encoding="utf-8")
+    return path
+
+
+def test_monitor_drift_reports_no_alert_for_identical_inputs(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    rows = ["0,0\n", "1,1\n", "2,2\n"]
+    reference = _write_csv(tmp_path / "reference.csv", rows)
+    target = _write_csv(tmp_path / "target.csv", rows)
+
+    _run_main(
+        monkeypatch,
+        "monitor_drift",
+        ["--reference", str(reference), "--target", str(target)],
+    )
+
+    out = capsys.readouterr().out
+    assert "Feature drift summary" in out
+    assert "No drift alerts detected" in out
+
+
+def test_monitor_drift_exits_non_zero_when_drift_is_detected(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    reference = _write_csv(tmp_path / "reference.csv", ["0,0\n", "1,1\n", "2,2\n"])
+    target = _write_csv(tmp_path / "target.csv", ["90,90\n", "91,91\n", "92,92\n"])
+
+    with pytest.raises(SystemExit) as excinfo:
+        _run_main(
+            monkeypatch,
+            "monitor_drift",
+            [
+                "--reference",
+                str(reference),
+                "--target",
+                str(target),
+                "--ks-threshold",
+                "0.1",
+            ],
+        )
+
+    assert excinfo.value.code == 1
+    assert "Drift alerts" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# scripts/smoke_exp1.py
+# ---------------------------------------------------------------------------
+
+
+def test_smoke_exp1_produces_a_run(monkeypatch, tmp_path) -> None:
+    """The fast sanity check documented in the README."""
+    results = tmp_path / "results"
+
+    _run_main(monkeypatch, "smoke_exp1", ["--results-dir", str(results)])
+
+    summaries = list(results.rglob("*_summary.json"))
+    assert len(summaries) == 1
+    payload = json.loads(summaries[0].read_text(encoding="utf-8"))
+    assert Path(payload["table"]).is_file()
+    assert Path(payload["figure"]).is_file()
