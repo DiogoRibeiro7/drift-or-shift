@@ -36,6 +36,7 @@ ENV/
 .coverage.*
 coverage.xml
 htmlcov/
+*.sarif
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/

@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Experiments 5 and 9 fitted an unconverged model, and their published
+  numbers are re-derived.** Both fit logistic regression on raw, unscaled
+  real-world features -- breast-cancer means span `0.004` to `880`, Covertype's
+  span `0` to `2959` -- so LBFGS exhausted `max_iter` without ever converging.
+  The coefficients, and every risk derived from them, depended on the platform's
+  BLAS: the figures reproduced exactly on Windows and differed on Linux and
+  macOS, where at `pi_test=0.5` even the sign of the offset's effect flipped.
+  Both now standardize features on the training split only, matching what Exp10
+  already did, and converge in tens of iterations.
+
+  **This changes published results.** Exp5's reference figures move (for example
+  `risk_offset` at `pi_test=0.01` from `0.0091` to `0.0105`, and at `pi_test=0.5`
+  from `0.0519` to `0.0421`), and one previously documented finding is
+  withdrawn: that offset correction is *worse than doing nothing* at
+  `pi_test=0.5` on real data. That was an artifact of the unconverged fit, not a
+  limitation of the method. With the fit converged the offset helps at every
+  prevalence, as the theory predicts.
+- **`RESULTS_DIGEST.md` quoted a ROC AUC band that excluded its own data.** It
+  claimed `[0.94, 0.96]`, but Exp2 produces `0.9382` at `pi_test=0.1`. The
+  observed range is `0.938`-`0.957`.
+- `RESULTS_DIGEST.md` linked artifacts under `results/`, which is regenerated
+  output and never committed, so every path was dead in a fresh clone. It now
+  explains how to regenerate a run instead.
+- `REPORT.md` documented five of the eleven experiments and invoked them by file
+  path rather than the installed `dos-expN` console scripts.
 - **The public API rejected the array types it is actually called with.**
   Every helper was annotated `Sequence[float]` / `Sequence[int]` while being
   called throughout the experiments with NumPy arrays and pandas Series. Since
@@ -43,6 +68,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The published results are now enforced. `tests/test_documented_results.py`
+  re-runs the configurations behind `RESULTS_DIGEST.md` on every CI build and
+  checks the published figures as well as the qualitative claims, so the digest
+  cannot silently go stale. Exp1-Exp4 reproduce their documented numbers
+  exactly; Exp5's were re-derived by the convergence fix above.
+- Automated releases. Pushing a `v*` tag builds and smoke-tests the
+  distribution and publishes a GitHub Release with notes taken from this file.
+  The workflow refuses to publish a tag that does not match
+  `drift_or_shift.__version__`, or a version with no `CHANGELOG.md` section --
+  the two mistakes a manual `twine upload` checklist is most likely to make.
+  PyPI publishing uses trusted publishing (no stored token) and stays inert
+  until a `pypi` environment is created.
+- `tools/print_version.py` and `tools/changelog_section.py`, the release
+  workflow's logic kept as testable scripts rather than inline YAML, covered by
+  `tests/test_release_tools.py`.
+- A security workflow: CodeQL, a `pip-audit` dependency audit, and `zizmor`
+  linting of the workflows themselves, on push, pull request, and weekly.
+  `tools/check_sarif.py` gates the build on the report's contents, because
+  zizmor exits 0 when asked for SARIF output even when it found problems.
+- Workflow hardening found by zizmor: tag names are no longer interpolated
+  into shell (a code-injection vector), and checkouts no longer persist
+  credentials.
 - `drift_or_shift.experiments` is now type-checked. The package was excluded
   from mypy entirely, leaving eleven modules unchecked; with the annotations
   corrected the exclusion is gone and mypy covers 28 files instead of 14.

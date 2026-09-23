@@ -41,6 +41,10 @@ test-cov: ## Run tests with a coverage report
 
 check: lint format-check typecheck test ## Run everything CI runs
 
+security: ## Audit dependencies and lint the CI workflows
+	$(PYTHON) -m pip_audit --skip-editable --progress-spinner off
+	zizmor --config .github/zizmor.yml .github/workflows
+
 build: ## Build sdist + wheel and validate the metadata
 	$(PYTHON) -m build
 	$(PYTHON) -m twine check dist/*
