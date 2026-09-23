@@ -32,6 +32,9 @@ typecheck: ## Type-check with mypy
 test: ## Run the test suite
 	$(PYTHON) -m pytest
 
+test-network: ## Run the dataset-downloading tests (exp9, exp10)
+	$(PYTHON) -m pytest -m network
+
 test-cov: ## Run tests with a coverage report
 	$(PYTHON) -m pytest --cov=drift_or_shift --cov=caliblab \
 		--cov-report=term-missing --cov-report=html

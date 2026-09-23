@@ -58,6 +58,11 @@ together**, or local hooks and CI will disagree.
 ## Tests
 
 - Tests live in `tests/` and run with `pytest`.
+- Tests that download a dataset are marked `network` and are deselected by
+  default, so the standard run stays offline and fast. Run them with
+  `make test-network` (or `pytest -m network`).
+- Coverage has a floor of 85% (`fail_under` in `pyproject.toml`). It is a
+  regression guard, not a target to game.
 - Experiments are slow; prefer small `n` and fixed seeds in tests.
 - When you fix a bug, write the test that fails before the fix. Two long-lived
   bugs in this repo survived precisely because the suite exercised only the

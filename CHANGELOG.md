@@ -32,6 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Test coverage raised from 44% to 89% (48 tests to 153).
+  - `tests/test_experiments_cli.py` drives all eleven experiments through
+    their real command line. The nine offline experiments were previously at
+    12-24% coverage: the suite imported them and never ran them, so nothing
+    verified that an experiment completes, writes the artifacts it
+    advertises, or emits a well-formed summary.
+  - `tests/test_validation_contracts.py` covers the input-validation guards
+    and degenerate-input paths across `data_synth`, `ess`, `metrics`,
+    `calibration`, `drift_variants`, and `drift_monitor`.
+  - `tests/test_reporting_edge_cases.py` covers the reporting fallbacks:
+    missing results directory, truncated summary JSON, unparseable
+    timestamps with mtime fallback, and threshold-config validation.
+- A `network` pytest marker for the two dataset-downloading experiments
+  (exp9, exp10), deselected by default so the standard run stays offline.
+- A coverage floor of 85% (`fail_under`) to guard against regression.
 - `LICENSE` (MIT) — the project declared MIT in metadata but shipped no licence text.
 - PEP 561 `py.typed` markers for `drift_or_shift`, `drift_shift_pipeline`, and `caliblab`.
 - `CHANGELOG.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue/PR templates, and Dependabot config.
