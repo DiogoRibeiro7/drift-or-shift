@@ -11,27 +11,27 @@ import pandas as pd
 from drift_or_shift import (
     DEFAULT_COSTS,
     DRIFT_FEATURE_METRICS,
-    ExperimentConfig,
-    PI_TRAIN,
     PI_TEST_GRID,
+    PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_calibrator,
     apply_logit_offset,
     feature_drift_metrics,
+    find_best_temperature,
     fit_isotonic_calibrator,
     fit_logistic_regression,
-    find_best_temperature,
     logit_offset,
     make_gaussian_binary,
     plot_risk_vs_prevalence,
     predict_logits,
-    temperature_scale,
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
+    temperature_scale,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
@@ -64,7 +64,13 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         mu1 = np.zeros(config.d)
         mu1[: min(5, config.d)] = 1.0
         X_train, y_train = make_gaussian_binary(
-            config.n_train, config.d, config.pi_train, mu0, mu1, sigma=1.0, rng=rng_train
+            config.n_train,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1,
+            sigma=1.0,
+            rng=rng_train,
         )
         model = fit_logistic_regression(X_train, y_train, rng=rng_train)
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)

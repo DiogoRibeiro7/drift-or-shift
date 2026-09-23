@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -26,7 +26,9 @@ def shift_mean_vector(mean: Sequence[float], delta: Sequence[float]) -> np.ndarr
     return mean_arr + delta_arr
 
 
-def inject_label_noise(labels: Sequence[int], flip_prob: float, rng: np.random.Generator) -> np.ndarray:
+def inject_label_noise(
+    labels: Sequence[int], flip_prob: float, rng: np.random.Generator
+) -> np.ndarray:
     """Flip a fraction of binary labels to simulate annotation noise."""
     if not 0 <= flip_prob <= 1:
         raise ValueError("flip_prob must be between 0 and 1")

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import drift_shift_pipeline
 import drift_or_shift
+import drift_shift_pipeline
 
 
 def test_import_alias_modules_are_equivalent() -> None:
@@ -18,9 +18,7 @@ def test_import_alias_sane_version() -> None:
 def test_experiments_path_compatibility() -> None:
     import importlib
 
-    topo = importlib.import_module(
-        "drift_or_shift.experiments.exp1_label_shift_synth"
-    )
+    topo = importlib.import_module("drift_or_shift.experiments.exp1_label_shift_synth")
     legacy = importlib.import_module(
         "drift_or_shift.experiments.experiments.exp1_label_shift_synth"
     )

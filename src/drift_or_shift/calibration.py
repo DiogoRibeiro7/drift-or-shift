@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -38,7 +38,9 @@ def find_best_temperature(
     A default grid spans from 0.05 to 3.0.
     """
     if grid is None:
-        grid = list(np.concatenate([np.logspace(-2, -0.5, 5), np.linspace(0.1, 3.0, 50)]))
+        grid = list(
+            np.concatenate([np.logspace(-2, -0.5, 5), np.linspace(0.1, 3.0, 50)])
+        )
     logits_arr = np.asarray(logits, dtype=float)
     targets_arr = np.asarray(targets, dtype=float)
     if logits_arr.shape != targets_arr.shape:
@@ -52,7 +54,8 @@ def find_best_temperature(
             continue
         scaled = _sigmoid(logits_arr / temperature)
         loss = -(
-            targets_arr * np.log(scaled + eps) + (1 - targets_arr) * np.log(1 - scaled + eps)
+            targets_arr * np.log(scaled + eps)
+            + (1 - targets_arr) * np.log(1 - scaled + eps)
         ).mean()
         losses.append((temperature, float(loss)))
     if not losses:
@@ -60,7 +63,9 @@ def find_best_temperature(
     return min(losses, key=lambda item: item[1])[0]
 
 
-def fit_isotonic_calibrator(scores: ArrayLike, targets: ArrayLike, *, out_of_bounds: str = "clip") -> IsotonicRegression:
+def fit_isotonic_calibrator(
+    scores: ArrayLike, targets: ArrayLike, *, out_of_bounds: str = "clip"
+) -> IsotonicRegression:
     """
     Fit an isotonic regression calibrator mapping scores to calibrated probabilities.
     """

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 from sklearn.metrics import auc, precision_recall_curve, roc_auc_score
@@ -42,12 +42,10 @@ def oracle_threshold_min_risk(
     scores: Sequence[float],
     c10: float,
     c01: float,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Return the threshold minimizing risk (operates on logits)."""
     score_arr = np.asarray(scores, float)
-    thresholds = np.concatenate(
-        ([np.inf], np.unique(score_arr), [-np.inf])
-    )
+    thresholds = np.concatenate(([np.inf], np.unique(score_arr), [-np.inf]))
     best_threshold = thresholds[0]
     best_risk = float("inf")
     for thr in thresholds:

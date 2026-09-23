@@ -12,9 +12,9 @@ import pandas as pd
 from drift_or_shift import (
     DEFAULT_COSTS,
     DRIFT_FEATURE_METRICS,
-    ExperimentConfig,
     PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_covariance_shift,
     apply_logit_offset,
@@ -30,8 +30,8 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
@@ -94,7 +94,9 @@ def _plot_drift_risks(summary: pd.DataFrame, path: Path) -> None:
     plt.close(fig)
 
 
-def _run_experiment(config: ExperimentConfig, drift_types: list[str], results_dir: Path) -> None:
+def _run_experiment(
+    config: ExperimentConfig, drift_types: list[str], results_dir: Path
+) -> None:
     records: list[dict[str, object]] = []
     offset = logit_offset(config.pi_train, config.pi_train)
     for seed in config.seeds:
@@ -110,16 +112,26 @@ def _run_experiment(config: ExperimentConfig, drift_types: list[str], results_di
 
         for idx, drift_type in enumerate(drift_types):
             rng_test = np.random.default_rng(seed * len(drift_types) + idx)
-            X_test, y_test = _sample_drifted_data(drift_type, config.n_test, config.d, config.pi_train, rng_test)
+            X_test, y_test = _sample_drifted_data(
+                drift_type, config.n_test, config.d, config.pi_train, rng_test
+            )
             scores = predict_logits(model, X_test)
-            risk_none = risk_cost_sensitive(y_test, (scores >= threshold).astype(int), config.c10, config.c01)
+            risk_none = risk_cost_sensitive(
+                y_test, (scores >= threshold).astype(int), config.c10, config.c01
+            )
             risk_offset = risk_cost_sensitive(
-                y_test, (apply_logit_offset(scores, offset) >= threshold).astype(int), config.c10, config.c01
+                y_test,
+                (apply_logit_offset(scores, offset) >= threshold).astype(int),
+                config.c10,
+                config.c01,
             )
             retrain_model = fit_logistic_regression(X_test, y_test, rng=rng_test)
             retrain_scores = predict_logits(retrain_model, X_test)
             risk_retrain = risk_cost_sensitive(
-                y_test, (retrain_scores >= threshold).astype(int), config.c10, config.c01
+                y_test,
+                (retrain_scores >= threshold).astype(int),
+                config.c10,
+                config.c01,
             )
             ratio = density_ratio_shift(X_train, X_test)
             drift_score = drift_score_from_ratio(ratio)

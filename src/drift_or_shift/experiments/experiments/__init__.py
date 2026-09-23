@@ -9,23 +9,23 @@ from __future__ import annotations
 from pathlib import Path
 
 from .._common import (
-    ExperimentConfig,
-    aggregate_mean_std,
     DEFAULT_COSTS,
     PI_TEST_GRID,
     PI_TRAIN,
     SEEDS,
-)  # noqa: F401
+    ExperimentConfig,
+    aggregate_mean_std,
+)
 
 # Make `drift_or_shift.experiments.experiments.<experiment_module>` resolve in
 # `drift_or_shift.experiments` without copying data files.
 __path__.insert(0, str(Path(__file__).resolve().parents[1]))
 
 __all__ = [
-    "ExperimentConfig",
-    "aggregate_mean_std",
     "DEFAULT_COSTS",
     "PI_TEST_GRID",
     "PI_TRAIN",
     "SEEDS",
+    "ExperimentConfig",
+    "aggregate_mean_std",
 ]

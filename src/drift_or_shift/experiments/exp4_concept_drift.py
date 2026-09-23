@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 
 from drift_or_shift import (
-    ExperimentConfig,
     DEFAULT_COSTS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_logit_offset,
     concept_drift_mu1,
@@ -22,13 +22,15 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experiment 4: concept drift comparison.")
+    parser = argparse.ArgumentParser(
+        description="Experiment 4: concept drift comparison."
+    )
     parser.add_argument("--n-train", type=int, default=2000)
     parser.add_argument("--n-test", type=int, default=2000)
     parser.add_argument("--d", type=int, default=6)
@@ -48,14 +50,26 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         mu1_drift = concept_drift_mu1(mu1, shift_dim=min(5, config.d - 1), delta=0.5)
 
         X_train, y_train = make_gaussian_binary(
-            config.n_train, config.d, config.pi_train, mu0, mu1, sigma=1.0, rng=rng_train
+            config.n_train,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1,
+            sigma=1.0,
+            rng=rng_train,
         )
         model = fit_logistic_regression(X_train, y_train, rng=rng_train)
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
 
         rng_test = np.random.default_rng(seed + 42)
         X_test, y_test = make_gaussian_binary(
-            config.n_test, config.d, config.pi_train, mu0, mu1_drift, sigma=1.0, rng=rng_test
+            config.n_test,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1_drift,
+            sigma=1.0,
+            rng=rng_test,
         )
 
         scores = predict_logits(model, X_test)
@@ -71,7 +85,13 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
 
         rng_retrain = np.random.default_rng(seed + 99)
         X_retrain, y_retrain = make_gaussian_binary(
-            config.n_train, config.d, config.pi_train, mu0, mu1_drift, sigma=1.0, rng=rng_retrain
+            config.n_train,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1_drift,
+            sigma=1.0,
+            rng=rng_retrain,
         )
         retrained_model = fit_logistic_regression(X_retrain, y_retrain, rng=rng_retrain)
         retrained_scores = predict_logits(retrained_model, X_test)

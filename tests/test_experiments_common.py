@@ -1,6 +1,11 @@
 import pandas as pd
 
-from drift_or_shift.experiments import ExperimentConfig, aggregate_mean_std, PI_TEST_GRID, SEEDS
+from drift_or_shift.experiments import (
+    PI_TEST_GRID,
+    SEEDS,
+    ExperimentConfig,
+    aggregate_mean_std,
+)
 
 
 def test_aggregate_mean_std_returns_mean_and_std() -> None:
