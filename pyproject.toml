@@ -170,7 +170,9 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["drift_or_shift", "caliblab"]
+# The scripts are documented entry points, so they are measured too. Leaving
+# them out reported 89% while a fifth of the shipped code was invisible.
+source = ["drift_or_shift", "caliblab", "scripts", "reproduce"]
 branch = true
 
 [tool.coverage.report]

@@ -109,7 +109,14 @@ def detect_drift_alerts(
     aggregated = summary.get("aggregated", {}) or {}
     alerts: list[tuple[str, float, float]] = []
     for metric, threshold in thresholds.items():
+        # Experiments aggregate through `aggregate_mean_std`, which emits
+        # `<metric>_mean` and `<metric>_std` rather than the bare metric name.
+        # Looking only at the bare name matched nothing a real run produces, so
+        # no alert could ever fire. The bare name is still accepted first, for
+        # summaries that carry raw per-run series.
         values = aggregated.get(metric)
+        if values is None:
+            values = aggregated.get(f"{metric}_mean")
         mean_value = _safe_mean(values)
         if mean_value is not None and mean_value >= threshold:
             alerts.append((metric, mean_value, threshold))

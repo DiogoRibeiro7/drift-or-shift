@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Drift alerting never fired.** `detect_drift_alerts` looked up thresholds by
+  the bare metric name (`feature_max_ks`), but experiments aggregate through
+  `aggregate_mean_std`, which writes `feature_max_ks_mean`. The two key sets did
+  not overlap at all, so every real summary produced zero alerts:
+  `scripts/drift_alerts.py` always printed "No drift alerts detected",
+  `--fail-on-alerts` could never trip, and `scripts/watch_results.py` polled for
+  something that could not happen. The existing tests passed because each one
+  hand-built a summary using the bare key that no experiment writes. The lookup
+  now accepts `<metric>_mean`, and a regression test builds its summary through
+  the real aggregation function instead of asserting against a hand-written
+  shape.
+- **`reproduce/scripts/make_tables.py` could not run.** It passed `eps=` to
+  `log_loss`, which scikit-learn deprecated in 1.3 and removed in 1.5. The
+  module was at 0% coverage, so nothing noticed.
+- `make_tables` no longer triggers the pandas 2.2 deprecation about
+  `DataFrameGroupBy.apply` operating on grouping columns.
+
 - The pre-commit hooks and the `dev` extra had drifted apart. Dependabot
   watches `pyproject.toml` but not `.pre-commit-config.yaml`, so a dependency
   PR moved `mypy` from 1.20.2 to 2.3.1, `ruff` to 0.16.8 and the PyYAML stubs
@@ -153,6 +170,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Explicit Ruff rule selection and exact dev-tool pins so local and CI agree.
 
 ### Changed
+
+- Coverage measures `scripts/` and `reproduce/` as well as the two packages.
+  It previously reported 89% while leaving 439 statements of documented entry
+  points entirely unmeasured -- four of them at 0%. The headline figure is
+  still about 89%, but now over 1858 statements rather than 1419.
 
 - **The distribution is renamed from `drift-shift-pipeline` to `drift-or-shift`**,
   so it matches the import package `drift_or_shift`. The project had five names
