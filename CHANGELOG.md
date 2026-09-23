@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The pre-commit hooks and the `dev` extra had drifted apart. Dependabot
+  watches `pyproject.toml` but not `.pre-commit-config.yaml`, so a dependency
+  PR moved `mypy` from 1.20.2 to 2.3.1, `ruff` to 0.16.8 and the PyYAML stubs
+  forward in one file and left the hooks behind. Nothing went red, because
+  each file is internally consistent -- the hooks and CI had simply stopped
+  checking the same thing. The hooks are resynced, Dependabot now watches the
+  `pre-commit` ecosystem, and `tests/test_tooling_pins.py` fails if the two
+  ever disagree again, so the rule `CONTRIBUTING.md` states is now enforced
+  rather than merely written down.
+
 - `calibration._sigmoid` overflowed for large negative logits. The saturated
   result was correct, but NumPy warned on the way there, and that noise can
   mask a real warning. Evaluated piecewise now; the values are unchanged to

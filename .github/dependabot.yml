@@ -17,3 +17,16 @@ updates:
     schedule:
       interval: weekly
     labels: ["dependencies", "ci"]
+
+  # Without this, Dependabot bumps a tool in pyproject.toml's dev extra and
+  # leaves .pre-commit-config.yaml behind, so the hooks and CI quietly stop
+  # checking the same versions. tests/test_tooling_pins.py catches the drift;
+  # this is what stops it happening.
+  - package-ecosystem: pre-commit
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "ci"]
+    groups:
+      pre-commit-hooks:
+        patterns: ["*"]
