@@ -44,5 +44,5 @@ repos:
         # CI type-check against identical stubs.
         additional_dependencies:
           - numpy==2.5.3
-          - pandas-stubs==3.0.5.260914
+          - pandas-stubs==2.3.3.260113
           - types-PyYAML==6.0.12.20260906
