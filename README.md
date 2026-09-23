@@ -1,68 +1,174 @@
 # drift-shift-pipeline
 
-![CI](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml/badge.svg) ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
+[![Checked with mypy](https://img.shields.io/badge/mypy-checked-2a6db2)](https://mypy-lang.org/)
 
-`drift-shift-pipeline` packages a lean research pipeline for reproducing the label shift insights from `ssrn-6052514`. Start with synthetic two-class Gaussian data, apply Bayes-ideal offset correction without retraining, and then inspect how invariances (ROC AUC) and dependencies (PR-AUC, ESS) emerge across multiple experiments. When the class-conditionals drift, we rerun logistic regression (concept drift experiment) and show why the offset-only strategy fails.
+A reproducible research pipeline for distinguishing **label shift** from **concept
+drift**, and for showing exactly when a training-free logit offset is sufficient —
+and when it is not.
 
-Use the CLI entry points or the experiment scripts to rerun every figure/table, and rely on the smoke runner + tests to stay release-ready as you iterate.
+The experiments reproduce and extend the analysis in
+[SSRN 6052514](paper/ssrn-6052514.pdf): start from synthetic two-class Gaussian
+data, apply the Bayes-optimal offset correction without retraining, then observe
+which metrics are invariant (ROC AUC) and which are not (PR-AUC, effective sample
+size). When the class-conditionals themselves move, the offset provably cannot
+recover the new posterior, and retraining becomes necessary.
+
+---
+
+## Installation
+
+```bash
+# From source, for development
+git clone https://github.com/DiogoRibeiro7/drift-shift-pipeline.git
+cd drift-shift-pipeline
+make install          # editable install + dev extras + pre-commit hooks
+```
+
+Without `make`:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pre_commit install
+```
+
+Runtime install only:
+
+```bash
+python -m pip install .
+```
+
+Requires Python 3.10+. This installs the `drift_or_shift` package, the
+`drift_shift_pipeline` compatibility alias, the `caliblab` calibration
+benchmarking helpers, and the eleven `dos-expN` console scripts.
 
 ## Quickstart
 
-- `pip install -e .` (also installs the `dos-exp1`...`dos-exp5` scripts).
-- `python -c "import drift_or_shift"` should succeed to ensure the package is discoverable.
-- During development run `pytest`, `ruff .`, and `mypy` as listed in `pyproject.toml` to keep invariants tight.
+```bash
+# Fast end-to-end sanity check (seconds)
+python scripts/smoke_exp1.py --results-dir results/smoke
 
-## Key concepts
+# A full experiment
+dos-exp1 --pi-train 0.2 --pi-tests 0.05 0.2 0.5 --results-dir results
+
+# Aggregate every run into a reviewable dashboard
+python scripts/aggregate_results.py --results-dir results \
+    --output reports/dashboard.md --figure reports/best_risk.png
+```
+
+Each run writes `tables/`, `figures/`, and a `_summary.json` into
+`results/<experiment>/<utc-timestamp>/`.
+
+## Core concepts
 
 ### Label shift vs. concept drift
 
-- **Label shift**: class-conditionals remain stable; only `pi_test` differs from `pi_train`. An additive logit offset pushes the scoring function to the test prevalence.
-- **Concept drift**: decision boundaries move (e.g., drifted `mu1`). Offset correction can't recover the new posterior, so retraining becomes necessary, as shown in Exp4.
+| | Label shift | Concept drift |
+| --- | --- | --- |
+| What moves | Class prior `π` only | The class-conditionals `p(x\|y)` |
+| Posterior recoverable without retraining? | **Yes** — additive logit offset | **No** |
+| Demonstrated by | Exp 1, 2, 5, 8–11 | Exp 4, 7 |
 
-### Offset correction & thresholds
+### Offset correction
 
-- Logits are log-odds, and the offset is `log(pi_test*(1-pi_train) / (pi_train*(1-pi_test)))`.
-- Apply the offset before comparing to the threshold derived from `log(c10/c01)`; default costs (`c10=c01=1`) give a zero threshold.
-- The ranking of scores remains invariant under constant offsets, so ROC AUC stays stable across prevalences.
+Logits are log-odds, so shifting the prior from `π_train` to `π_test` is a
+constant additive term:
 
-## Experiments snapshot
+```
+offset = log( π_test · (1 − π_train) / (π_train · (1 − π_test)) )
+```
 
-- `dos-exp1`: synthetic label shift with offset correction vs. oracle risk (`src/drift_or_shift/experiments/exp1_label_shift_synth.py`).
-- `dos-exp2`: ROC AUC invariance and PR-AUC dependence (`exp2_auc_pr_invariance.py`).
-- `dos-exp3`: ESS fraction as class weight α grows (`exp3_ess_vs_weight.py`).
-- `dos-exp4`: concept drift demonstration (standard vs. offset vs. retrained).
-- `dos-exp5`: breast cancer label shift replication with resampling.
-- `dos-exp6`: calibration vs. offset risks (temperature scaling + isotonic calibrators under label shift).
-- `dos-exp7`: drift-type sweep showing how covariance, feature, and label shifts defeat the single offset (`src/drift_or_shift/experiments/exp7_drift_types.py`).
-- `dos-exp8`: multimodal label shift with mixture components to stress-test offsets (`src/drift_or_shift/experiments/exp8_multimodal_label_shift.py`).
-- `dos-exp9`: Covertype label shift replication for a real-world, high-dimensional dataset (`src/drift_or_shift/experiments/exp9_covtype_label_shift.py`).
-- `dos-exp10`: credit card fraud label shift benchmark with standardized features and sample-reweighted prevalences (`src/drift_or_shift/experiments/exp10_credit_card_fraud.py`).
-- `dos-exp11`: high-variance medical-style benchmark that injects class-specific covariances and nonlinear test shifts to stress offset correction (`src/drift_or_shift/experiments/exp11_high_variance_medical.py`).
-- Each run writes `tables/`, `figures/`, and a `_summary.json` into `results/<exp>/<timestamp>/`.
+Apply the offset **before** comparing against the cost-derived threshold
+`log(c10 / c01)`; with default costs (`c10 = c01 = 1`) that threshold is zero.
+Because a constant offset preserves the ranking of scores, ROC AUC is invariant
+under label shift — while PR-AUC, which depends on prevalence, is not.
 
-## Reproducibility practices
+## Experiments
 
-- All data generation accepts `seed`, and experiments record their seeds, sizes, costs, and prevalence grids in the summary JSON.
-- Use `ExperimentConfig` in `drift_or_shift.experiments._common` or the CLI args to consistently reproduce runs.
-- The repository ships with smoke runners and regression tests, so rerunning `python scripts/smoke_exp1.py --results-dir results/smoke` gives you a fast sanity check.
+| Command | What it demonstrates |
+| --- | --- |
+| `dos-exp1` | Synthetic label shift: offset correction vs. oracle risk |
+| `dos-exp2` | ROC AUC invariance and PR-AUC prevalence dependence |
+| `dos-exp3` | ESS fraction shrinking as class weight α grows |
+| `dos-exp4` | Concept drift: standard vs. offset vs. retrained |
+| `dos-exp5` | Breast cancer label shift replication with resampling |
+| `dos-exp6` | Calibration (temperature, isotonic) vs. offset under label shift |
+| `dos-exp7` | Drift-type sweep: covariance, feature, and label shift |
+| `dos-exp8` | Multimodal label shift with mixture components |
+| `dos-exp9` | Covertype: real, high-dimensional label shift |
+| `dos-exp10` | Credit-card fraud benchmark with reweighted prevalences |
+| `dos-exp11` | High-variance medical-style benchmark with nonlinear test shifts |
 
-## Extension utilities
+Sources live in [src/drift_or_shift/experiments/](src/drift_or_shift/experiments/).
+Every script accepts `--help`.
 
-- `drift_or_shift.drift_variants` lets you inject covariance/feature shifts, label noise, and density-ratio scoring for new drift scenarios without rebuilding the generators.
-- `scripts/aggregate_results.py` (uses `drift_or_shift.reporting`) collects every `results/*/*_summary.json` and emits a markdown overview in `reports/` so you can surface orientation-ready summaries for reviewers.
-- `scripts/drift_alerts.py` scans the latest summaries for `feature_max_*` stats that exceeded the configured thresholds and writes `reports/drift_alerts.csv` (or a supplied fallback) for quick drift triage; `scripts/aggregate_results.py` now accepts `--fail-on-alerts` to stop the pipeline (exit 1) when any alert exists.
-- `scripts/watch_results.py` keeps a lightweight poller around the `results/` tree, rerunning the drift alerts/dashboard pair whenever new `_summary.json` files appear so dashboards stay aligned with fresh batches; use `python scripts/watch_results.py --once` for a single refresh or run it long-lived with `--poll-interval` tuned to your workflow.
+## Reproducibility
 
-## Reports & lessons
+- All generators take an explicit `seed`; summaries record seeds, sizes, costs,
+  and prevalence grids.
+- Run-directory names and summary timestamps are **UTC** and timezone-aware.
+- `ExperimentConfig` in `drift_or_shift.experiments._common` (or the CLI flags)
+  pins a run's configuration.
+- `reproduce/` holds a separate calibration-benchmark replication driven by
+  [reproduce/config/default.yaml](reproduce/config/default.yaml).
 
-- `RESULTS_DIGEST.md` summarizes the latest metrics and artifact paths so reviewers can understand what each experiment demonstrates without rerunning it.
-- `REPORT.md` lists the reproduction steps and highlights what each figure/table claims about label shift vs. concept drift.
-- `notes/lessons.md` captures counter-intuitive behaviors (e.g., PR-AUC dependence, ESS shrinkage, solver warnings) for future exploration.
+## Tooling utilities
 
-## Maintenance & readiness
+- `drift_or_shift.drift_variants` — inject covariance/feature shifts, label
+  noise, and density-ratio scoring without rebuilding the generators.
+- `scripts/aggregate_results.py` — collect every `results/*/*_summary.json` into
+  a markdown dashboard; `--fail-on-alerts` exits non-zero when drift is detected.
+- `scripts/drift_alerts.py` — flag `feature_max_*` statistics above threshold
+  into `reports/drift_alerts.csv`.
+- `scripts/watch_results.py` — poll `results/` and refresh alerts + dashboard as
+  new summaries land (`--once` for a single pass).
 
-- Follow `RELEASE.md` when preparing versioned candidates: bump metadata, run the smoke script, capture results, and tag.
-- `FUTURE.md` holds candidate extensions (new datasets, drift types, calibration studies, automation dashboards) plus their learning goals.
-- `tests/test_smoke_exp1_script.py` invokes the smoke runner every pytest session to guard against regressions.
+See [docs/CLI_USAGE.md](docs/CLI_USAGE.md) for full flag documentation.
 
-[![Build Status](https://github.com/DiogoRibeiro7/drift-shift-pipeline/workflows/CI/badge.svg)](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions)
+## Development
+
+```bash
+make check      # ruff + black + mypy + pytest, exactly what CI runs
+make test-cov   # tests with an HTML coverage report
+make build      # sdist + wheel, validated with twine
+make help       # all targets
+```
+
+CI runs the suite on Python 3.10–3.13 on Linux, plus Windows and macOS spot
+checks, and verifies that the built wheel installs and runs in a clean
+environment.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branching and PR conventions, and
+[CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Project documents
+
+| File | Contents |
+| --- | --- |
+| [RESULTS_DIGEST.md](RESULTS_DIGEST.md) | Latest metrics and artifact paths |
+| [REPORT.md](REPORT.md) | Reproduction steps and what each figure claims |
+| [notes/lessons.md](notes/lessons.md) | Counter-intuitive findings worth revisiting |
+| [ROADMAP.md](ROADMAP.md) | Milestones |
+| [FUTURE.md](FUTURE.md) | Candidate extensions |
+| [RELEASE.md](RELEASE.md) | Release checklist |
+
+## Citation
+
+If this code supports academic work, please cite the underlying paper
+(`paper/ssrn-6052514.pdf`) and reference this repository:
+
+```bibtex
+@software{ribeiro_drift_shift_pipeline,
+  author  = {Ribeiro, Diogo},
+  title   = {drift-shift-pipeline: label shift, offset correction and drift diagnostics},
+  url     = {https://github.com/DiogoRibeiro7/drift-shift-pipeline},
+  version = {0.1.0}
+}
+```
+
+## License
+
+Released under the [MIT License](LICENSE).
