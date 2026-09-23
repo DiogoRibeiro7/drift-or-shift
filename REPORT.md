@@ -72,13 +72,11 @@ shifts a prior that is no longer the problem. Retraining on the drifted data is
 what lowers risk.
 
 **Exp5 — breast cancer.** Real-data risk per strategy across the prevalence
-grid. Offset correction helps most under the strongest shift (`pi_test=0.01`).
-**This experiment is not currently reproducible across platforms**: it fits on
-raw, unscaled features whose means span `0.004` to `880`, so LBFGS exhausts
-`max_iter` without converging and the coefficients depend on the platform's
-BLAS. Linux, macOS and Windows disagree, including on the *sign* of the
-offset's effect at `pi_test=0.5`. Standardizing the features makes the fit
-converge in about twenty iterations; see the caveat below.
+grid. Features are standardized on the training split before fitting, so the
+model converges and the results reproduce across platforms. Offset correction
+helps at every prevalence, most under the largest shift, and is inert at
+`pi_test = pi_train`. See the takeaway below for why this experiment used to
+say something different.
 
 **Exp6–Exp11.** Calibration under label shift (temperature and isotonic), a
 sweep over drift types, multimodal mixtures, and three higher-dimensional or
@@ -95,18 +93,20 @@ its configuration in `_summary.json`.
 - **Metric choice decides what you can see.** Exp2 shows ROC AUC surviving a
   prevalence shift that PR-AUC registers strongly. Reporting only the invariant
   metric would hide the shift entirely.
-- **An unconverged fit is not a result.** Exp5's numbers come from a logistic
-  regression that stops at `max_iter` rather than at an optimum, which makes them
-  platform-dependent. The fix is standard — standardize the features — but it
-  changes Exp5's published figures, so it is left as a maintainer decision rather
-  than applied silently. Until then, draw conclusions about real-data behaviour
-  from Exp1-Exp4, which are stable everywhere CI runs.
+- **An unconverged fit is not a result.** Exp5 and Exp9 used to fit on raw,
+  unscaled features, so LBFGS stopped at `max_iter` rather than at an optimum and
+  the coefficients depended on the platform's BLAS. That produced a finding —
+  that offset correction *hurts* at `pi_test=0.5` on real data — which looked like
+  an interesting limitation of the method and was in fact an artifact. With the
+  features standardized, both experiments converge and the offset helps at every
+  prevalence. When a real-data result contradicts the theory, check that the
+  optimizer finished before believing it.
 
 ## Verification
 
 `tests/test_documented_results.py` re-runs the configurations behind
 `RESULTS_DIGEST.md` on every CI build and asserts both the published figures and
-the qualitative claims above. Exp1-Exp4 are enforced on Linux, macOS and Windows.
-Exp5's figures are skipped with an explicit reason, and
-`test_exp5_does_not_converge_on_raw_features` pins the defect that makes them
-unreliable, so it cannot be forgotten.
+the qualitative claims above, on Linux, macOS and Windows.
+`test_exp5_fit_converges` and `test_exp5_run_emits_no_convergence_warnings` guard
+the convergence fix, so the experiment cannot silently regress to an unconverged
+state.

@@ -13,16 +13,14 @@ regenerate it.
 configurations below on every CI build and checks both the published figures
 and the qualitative claims, so this digest cannot silently go stale.
 
-**Experiment 5 is the exception, and it is a known defect.** Its figures
-reproduce exactly on Windows and differ on Linux and macOS, because it fits
-logistic regression on raw, unscaled features whose means span `0.004` to
-`880`. LBFGS exhausts `max_iter` without converging, so the coefficients --
-and every number derived from them -- depend on the platform's BLAS.
-Standardizing the features makes the same fit converge in about twenty
-iterations. That would make Exp5 reproducible but would also change its
-published numbers, so it is left as a maintainer decision; the Exp5
-assertions are skipped until then. Exp1-Exp4 are stable on every platform
-CI covers.
+**Experiments 5 and 9 were re-derived after a convergence fix.** Both fit
+logistic regression on raw, unscaled real-world features -- breast-cancer
+means span `0.004` to `880`, Covertype's span `0` to `2959` -- so LBFGS
+exhausted `max_iter` without converging and the coefficients depended on the
+platform's BLAS. Their previous figures were one machine's snapshot of a
+non-converged optimizer and did not reproduce on Linux or macOS. Both now
+standardize features on the training split (as Exp10 already did), converge
+in tens of iterations, and the figures below are the corrected values.
 
 ## Experiment 1 – Synthetic label shift with offset correction
 
@@ -53,16 +51,16 @@ CI covers.
 ## Experiment 5 – Breast cancer label shift replication
 
 - **Config & provenance:** Stratified train/test split of `sklearn.datasets.load_breast_cancer`, resampled to `pi_train=0.2`, `pi_tests` as above, `seeds=[0,1,2,3,4]`, timestamp `2026-01-14T13:28:15.064888`. Table: `results/exp5_realdata_breast_cancer/20260114_132814/tables/exp5_realdata_breast_cancer.csv`. Figure: `results/exp5_realdata_breast_cancer/20260114_132814/figures/exp5_realdata_breast_cancer.png`.
-- **Key metrics (Windows; see the caveat above):** At `pi_test=0.01`,
-  `risk_none=0.0246`, `risk_offset=0.0091`, `risk_oracle=0.0035`; at `pi_test=0.5`,
-  `risk_none=0.0484`, `risk_offset=0.0519`, `risk_oracle=0.0421`. Offset correction
-  helps most under the strongest shift (`pi_test=0.01`), which holds on every
-  platform. The mid-grid and `pi_test=0.5` figures do **not** reproduce elsewhere:
-  on Linux the offset wins at `pi_test=0.5` rather than losing. Treat these numbers
-  as one platform's run of a non-converged fit, not as a result.
-- **Observation/deviation:** The LBFGS convergence warnings that earlier revisions of
-  this digest noted in passing are not cosmetic -- they are the reason this experiment
-  is not reproducible. Until the features are scaled, no conclusion should be drawn
-  from Exp5 about whether offset correction helps or hurts at a given prevalence;
-  different platforms disagree on the sign. `test_exp5_does_not_converge_on_raw_features`
-  pins the cause so it stays visible.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0449`, `risk_offset=0.0105`,
+  `risk_oracle=0.0042`; at `pi_test=0.5`, `risk_none=0.0540`, `risk_offset=0.0421`,
+  `risk_oracle=0.0351`. Offset correction helps at every prevalence, most strongly
+  under the largest shift, and is exactly inert at `pi_test=pi_train=0.2`.
+- **Observation/deviation:** An earlier revision of this digest reported that offset
+  correction was *worse than doing nothing* at `pi_test=0.5` (`0.0519` vs `0.0484`)
+  and read that as a real limitation of the method on finite real data. It was not:
+  it was an artifact of the unconverged fit. With the fit converged, the offset helps
+  at every prevalence, exactly as the theory predicts. At five seeds the difference at
+  `pi_test=0.1` is smaller than the seed-to-seed spread (`0.0007` against a standard
+  deviation of `0.0152`); the qualitative claim is checked over twenty seeds in
+  `test_exp5_offset_helps_at_every_prevalence`. The LBFGS convergence warnings earlier
+  revisions mentioned in passing were the symptom of the underlying defect.
