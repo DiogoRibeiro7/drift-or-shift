@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "drift-shift-pipeline"
+name = "drift-or-shift"
 description = "Label shift vs. concept drift: Bayes-optimal offset correction, calibration, and drift diagnostics."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -59,10 +59,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/DiogoRibeiro7/drift-shift-pipeline"
-Repository = "https://github.com/DiogoRibeiro7/drift-shift-pipeline"
-Issues = "https://github.com/DiogoRibeiro7/drift-shift-pipeline/issues"
-Changelog = "https://github.com/DiogoRibeiro7/drift-shift-pipeline/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/DiogoRibeiro7/drift-or-shift"
+Repository = "https://github.com/DiogoRibeiro7/drift-or-shift"
+Issues = "https://github.com/DiogoRibeiro7/drift-or-shift/issues"
+Changelog = "https://github.com/DiogoRibeiro7/drift-or-shift/blob/main/CHANGELOG.md"
 
 [project.scripts]
 dos-exp1 = "drift_or_shift.experiments.exp1_label_shift_synth:main"

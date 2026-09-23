@@ -37,9 +37,9 @@ def test_package_exposes_version() -> None:
 
 def test_declared_version_matches_installed_metadata() -> None:
     try:
-        installed = metadata.version("drift-shift-pipeline")
+        installed = metadata.version("drift-or-shift")
     except metadata.PackageNotFoundError:  # pragma: no cover - not installed
-        pytest.skip("drift-shift-pipeline is not installed in this environment")
+        pytest.skip("drift-or-shift is not installed in this environment")
     assert installed == drift_or_shift.__version__
 
 

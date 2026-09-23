@@ -1,4 +1,4 @@
-"""drift-shift-pipeline: label shift and offset correction utilities."""
+"""drift-or-shift: label shift and offset correction utilities."""
 
 __version__ = "0.1.0"
 

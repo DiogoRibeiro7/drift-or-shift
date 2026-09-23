@@ -14,7 +14,7 @@ on `main` only.
 Please **do not** open a public issue for security problems.
 
 Report privately via
-[GitHub Security Advisories](https://github.com/DiogoRibeiro7/drift-shift-pipeline/security/advisories/new),
+[GitHub Security Advisories](https://github.com/DiogoRibeiro7/drift-or-shift/security/advisories/new),
 or by email to <hansolo.dj@gmail.com>.
 
 Include where possible:

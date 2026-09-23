@@ -1,6 +1,6 @@
-# drift-shift-pipeline
+# drift-or-shift
 
-[![CI](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/drift-shift-pipeline/actions/workflows/ci.yml)
+[![CI](https://github.com/DiogoRibeiro7/drift-or-shift/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/drift-or-shift/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
@@ -11,7 +11,7 @@ drift**, and for showing exactly when a training-free logit offset is sufficient
 and when it is not.
 
 The experiments reproduce and extend the analysis in
-[SSRN 6052514](paper/ssrn-6052514.pdf): start from synthetic two-class Gaussian
+[SSRN 6052514](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6052514): start from synthetic two-class Gaussian
 data, apply the Bayes-optimal offset correction without retraining, then observe
 which metrics are invariant (ROC AUC) and which are not (PR-AUC, effective sample
 size). When the class-conditionals themselves move, the offset provably cannot
@@ -23,8 +23,8 @@ recover the new posterior, and retraining becomes necessary.
 
 ```bash
 # From source, for development
-git clone https://github.com/DiogoRibeiro7/drift-shift-pipeline.git
-cd drift-shift-pipeline
+git clone https://github.com/DiogoRibeiro7/drift-or-shift.git
+cd drift-or-shift
 make install          # editable install + dev extras + pre-commit hooks
 ```
 
@@ -158,13 +158,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branching and PR conventions, and
 ## Citation
 
 If this code supports academic work, please cite the underlying paper
-(`paper/ssrn-6052514.pdf`) and reference this repository:
+([SSRN 6052514](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6052514)) and reference this repository:
 
 ```bibtex
 @software{ribeiro_drift_shift_pipeline,
   author  = {Ribeiro, Diogo},
-  title   = {drift-shift-pipeline: label shift, offset correction and drift diagnostics},
-  url     = {https://github.com/DiogoRibeiro7/drift-shift-pipeline},
+  title   = {drift-or-shift: label shift, offset correction and drift diagnostics},
+  url     = {https://github.com/DiogoRibeiro7/drift-or-shift},
   version = {0.1.0}
 }
 ```

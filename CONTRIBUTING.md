@@ -1,12 +1,12 @@
-# Contributing to drift-shift-pipeline
+# Contributing to drift-or-shift
 
 Thanks for taking the time to contribute.
 
 ## Getting set up
 
 ```bash
-git clone https://github.com/DiogoRibeiro7/drift-shift-pipeline.git
-cd drift-shift-pipeline
+git clone https://github.com/DiogoRibeiro7/drift-or-shift.git
+cd drift-or-shift
 make install     # editable install, dev extras, and pre-commit hooks
 ```
 

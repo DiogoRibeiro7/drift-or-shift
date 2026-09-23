@@ -1,6 +1,9 @@
-"""Tests for alias package import compatibility."""
+"""Tests for the deprecated `drift_shift_pipeline` alias package."""
 
 from __future__ import annotations
+
+import importlib
+import warnings
 
 import drift_or_shift
 import drift_shift_pipeline
@@ -13,6 +16,24 @@ def test_import_alias_modules_are_equivalent() -> None:
 
 def test_import_alias_sane_version() -> None:
     assert hasattr(drift_shift_pipeline, "__version__")
+
+
+def test_alias_version_tracks_the_renamed_distribution() -> None:
+    """The distribution is `drift-or-shift` now, not `drift-shift-pipeline`."""
+    assert drift_shift_pipeline.__version__ == drift_or_shift.__version__
+
+
+def test_importing_the_alias_warns() -> None:
+    """It still works, but it should tell you to stop using it."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        importlib.reload(drift_shift_pipeline)
+
+    messages = [
+        str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
+    ]
+    assert any("deprecated alias" in m for m in messages), messages
+    assert any("drift_or_shift" in m for m in messages), messages
 
 
 def test_experiments_path_compatibility() -> None:

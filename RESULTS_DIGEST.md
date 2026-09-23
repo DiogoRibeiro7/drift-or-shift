@@ -1,7 +1,7 @@
 # Results Digest
 
 This digest summarizes a reference run of each experiment and highlights how the
-numbers support (or nuance) the claims in _ssrn-6052514_.
+numbers support (or nuance) the claims in [SSRN 6052514](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6052514).
 
 **Reproducing these numbers.** `results/` is regenerated output and is not
 committed, so the artifact paths below are illustrative of a run's layout

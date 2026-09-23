@@ -146,7 +146,7 @@ jobs:
     # repo, then create the environment. No API token is required.
     environment:
       name: pypi
-      url: https://pypi.org/p/drift-shift-pipeline
+      url: https://pypi.org/p/drift-or-shift
     permissions:
       id-token: write
     steps:

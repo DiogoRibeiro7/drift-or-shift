@@ -1,7 +1,7 @@
 # ROADMAP.md
 
 ## Project goal
-Implement, in Python, the methods and experiments from the paper in `ssrn-6052514.pdf`, focusing on:
+Implement, in Python, the methods and experiments from [SSRN 6052514](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6052514), focusing on:
 
 - Label-shift adaptation via a **single scalar logit/threshold offset** (no retraining).
 - Demonstrations of:
