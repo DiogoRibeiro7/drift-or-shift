@@ -20,4 +20,4 @@ Use this checklist whenever preparing a release candidate to keep the repo ready
 4. **Tag and push.**
    - Commit the version bump, docs updates, and smoke-test results.
    - Tag the commit (e.g., `git tag -a v0.1.0-rc.1 -m "Release candidate 0.1.0-rc.1"`) and push the tag.
-   - After CI passes, merge to `main`/`develop` as needed and push the tag/reference per your workflow.
+   - After CI passes, push the tag and publish the release from `main`.
