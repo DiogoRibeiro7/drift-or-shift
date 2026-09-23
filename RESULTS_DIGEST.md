@@ -64,3 +64,82 @@ in tens of iterations, and the figures below are the corrected values.
   deviation of `0.0152`); the qualitative claim is checked over twenty seeds in
   `test_exp5_offset_helps_at_every_prevalence`. The LBFGS convergence warnings earlier
   revisions mentioned in passing were the symptom of the underlying defect.
+
+## Experiment 6 – Calibration vs. offset under label shift
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `d=6`, `pi_train=0.2`, `seeds=[0..4]`,
+  symmetric costs. Compares the plain offset against temperature scaling and isotonic
+  regression applied before the same offset.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0469`, `risk_offset=0.0084`,
+  `risk_temp_offset=0.0085`, `risk_isotonic_offset=0.0091`; at `pi_test=0.5`, `0.1699`,
+  `0.1299`, `0.1295`, `0.1308` respectively.
+- **Observation/deviation:** Calibration buys nothing here, and isotonic regression is
+  consistently the worst of the three. That is the expected result rather than a
+  disappointment: under pure label shift a correctly specified logistic model is already
+  calibrated, so there is no miscalibration left for temperature or isotonic scaling to
+  remove — only estimation variance for them to add. Reach for calibration when the model
+  is misspecified, not when the prior moved.
+
+## Experiment 7 – Drift-type sweep
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `d=6`, `pi_train=0.2`,
+  `seeds=[0..4]`. Sweeps covariance shift, feature shift, and label noise at fixed prevalence.
+- **Key metrics:**
+
+  | drift type | `risk_none` | `risk_offset` | `risk_retrain` | `drift_score` |
+  | --- | --- | --- | --- | --- |
+  | covariance shift | 0.1663 | 0.1663 | 0.1432 | 3.7540 |
+  | feature shift | 0.0959 | 0.0959 | 0.0864 | 1.0548 |
+  | label noise | 0.3358 | 0.3358 | 0.3351 | 1.0514 |
+
+- **Observation/deviation:** `risk_offset` equals `risk_none` to the last digit in all three
+  rows, which is the cleanest statement of the repository's central point: none of these
+  scenarios moves the class prior, so the offset has nothing to correct and is exactly
+  inert. Retraining recovers something for covariance and feature shift. Under label noise
+  it recovers almost nothing (`0.3358` to `0.3351`) — noise destroys information that no
+  amount of refitting restores.
+
+## Experiment 8 – Multimodal label shift
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `d=6`, `pi_train=0.2`, `seeds=[0..4]`,
+  each class a mixture of Gaussian components.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0403`, `risk_offset=0.0077`,
+  `risk_oracle=0.0064`; at `pi_test=0.5`, `0.1360`, `0.1059`, `0.1023`.
+- **Observation/deviation:** None. The offset correction does not require unimodal
+  class-conditionals — only that they stay fixed while the prior moves.
+
+## Experiment 9 – Covertype label shift
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `seeds=[0..4]`, features standardized
+  on the training split. Downloads the Covertype dataset.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0646`, `risk_offset=0.0101`,
+  `risk_oracle=0.0097`; at `pi_test=0.5`, `0.3595`, `0.2488`, `0.2409`.
+- **Observation/deviation:** The offset helps at every prevalence on a real, high-dimensional
+  dataset. These figures post-date the convergence fix; before it this experiment fitted on
+  raw features spanning `0` to `2959` and never converged.
+
+## Experiment 10 – Credit-card fraud
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `seeds=[0..4]`, features standardized
+  on the training split. Downloads the `creditcard` dataset from OpenML.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0041`, `risk_offset=0.0033`,
+  `risk_oracle=0.0016`; at `pi_test=0.5`, `0.1332`, `0.1139`, `0.0801`.
+- **Observation/deviation:** At `pi_test=0.05` the offset is marginally worse than no
+  correction (`0.0173` vs `0.0153`). With five seeds on a severely imbalanced dataset this is
+  within run-to-run variation, and it is **not** treated as a finding — the mistake made
+  earlier with Exp5, where a similar inversion was written up as a property of the method
+  before it turned out to be an artifact. The gap between `risk_offset` and `risk_oracle` is
+  wider here than anywhere else, which says the decision threshold, not the prior, is what
+  limits performance under extreme imbalance.
+
+## Experiment 11 – High-variance medical benchmark
+
+- **Config & provenance:** `n_train=2000`, `n_test=2000`, `d=6`, `pi_train=0.2`, `seeds=[0..4]`,
+  class-specific covariances and nonlinear test-time shifts.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.1019`, `risk_offset=0.0165`,
+  `risk_retrain=0.0092`; at `pi_test=0.5`, `0.1184`, `0.1332`, `0.1095`.
+- **Observation/deviation:** At `pi_test=0.5` the offset is worse than doing nothing. Unlike
+  the superficially identical result Exp5 used to report, this one is real: the model
+  converges cleanly, and the experiment deliberately violates the label-shift assumption by
+  giving each class its own covariance. When the class-conditionals differ, a single additive
+  logit offset is the wrong correction, and retraining wins at every prevalence.
