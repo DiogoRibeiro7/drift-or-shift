@@ -48,7 +48,9 @@ dev = [
     "black==26.5.1",
     "build==1.6.1",
     "mypy==2.3.1",
-    "pandas-stubs==3.0.5.260914",
+    # pandas-stubs 3.x requires Python >= 3.11 and this project supports
+    # 3.10, so the dev extra cannot install it. See dependabot.yml.
+    "pandas-stubs==2.3.3.260113",
     "pre-commit==4.6.2",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
