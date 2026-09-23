@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Two documented results contradicted their own numbers.** `RESULTS_DIGEST.md`
+  claimed ROC AUC stays in `[0.94, 0.96]`, but Exp2 produces `0.9382` at
+  `pi_test=0.1`. It also said Exp5's offset correction "closes the gap under
+  label shift" while its own table shows the offset losing to no correction at
+  `pi_test=0.5` (`0.0519` vs `0.0484`) - a real limitation of the method on
+  finite, imperfectly calibrated real data, now stated plainly and pinned by a
+  test rather than glossed over. `REPORT.md` repeated the same claim.
+- `RESULTS_DIGEST.md` linked artifacts under `results/`, which is regenerated
+  output and never committed, so every path was dead in a fresh clone. It now
+  explains how to regenerate a run instead.
+- `REPORT.md` documented five of the eleven experiments and invoked them by file
+  path rather than the installed `dos-expN` console scripts.
 - **The distribution could not be built at all.** `tool.setuptools.packages` was
   set to the literal string `"find:"`, which modern setuptools rejects as an
   invalid package name. `pip install .` failed outright and `pip install -e .`
@@ -32,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The published results are now enforced. `tests/test_documented_results.py`
+  re-runs the configurations behind `RESULTS_DIGEST.md` on every CI build and
+  checks the published figures as well as the qualitative claims, so the digest
+  cannot silently go stale. Exp1, Exp3, Exp4, and Exp5 all reproduce their
+  documented numbers exactly.
 - Automated releases. Pushing a `v*` tag builds and smoke-tests the
   distribution and publishes a GitHub Release with notes taken from this file.
   The workflow refuses to publish a tag that does not match

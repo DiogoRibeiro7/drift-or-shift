@@ -1,53 +1,106 @@
-% Experiment Report for drift-shift-pipeline
+# Experiment Report
 
-This report walks through rerunning the experiments end-to-end and explains what each artifact says about label shift and concept drift. The numeric summary lives in `RESULTS_DIGEST.md`, so use that for a quick glance at metrics.
+This report walks through rerunning the experiments end-to-end and explains what
+each artifact says about label shift and concept drift. The numeric summary lives
+in [RESULTS_DIGEST.md](RESULTS_DIGEST.md); use that for a quick glance at metrics.
 
 ## Reproducing every experiment
-1. Create an editable install (so entry points recognize the package):
-   ```sh
-   python -m pip install -e .
-   ```
-2. Each experiment writes to `results/<exp_name>/<timestamp>/` with `tables/`, `figures/`, and a `_summary.json`. Run them with the provided script files:
-   - **Exp1 (label shift)**:
-     ```sh
-     python src/drift_or_shift/experiments/exp1_label_shift_synth.py --results-dir results
-     ```
-   - **Exp2 (ROC/PR invariance)**:
-     ```sh
-     python src/drift_or_shift/experiments/exp2_auc_pr_invariance.py --results-dir results
-     ```
-   - **Exp3 (ESS vs. class weight)**:
-     ```sh
-     python src/drift_or_shift/experiments/exp3_ess_vs_weight.py --results-dir results
-     ```
-   - **Exp4 (concept drift)**:
-     ```sh
-     python src/drift_or_shift/experiments/exp4_concept_drift.py --results-dir results
-     ```
-   - **Exp5 (breast cancer label shift)**:
-     ```sh
-     python src/drift_or_shift/experiments/exp5_realdata_breast_cancer.py --results-dir results
-     ```
-3. Each script honors CLI flags shown in its `_parse_args` function (`--n-train`, `--pi-tests`, `--c10`, etc.), so you can create smaller runs (fewer seeds, fewer prevalences) for quick checks. Always point `--results-dir` to the same base so artifacts group under `results/<exp>/<timestamp>/`.
 
-## Artifact narrative
-- **Exp1 table & figure** (`results/exp1_label_shift_synth/...`):
-  - Table: mean/std risk for *no correction*, *offset*, and *oracle* across `pi_test`. It proves that an additive logit offset recovers the test posterior, driving the risk curve close to the oracle line.
-  - Figure: risk vs. prevalence; visualizes how offset correction dramatically lowers risk for rare positives and maintains alignment for balanced cases.
-- **Exp2 table & figure** (`results/exp2_auc_pr_invariance/...`):
-  - Table: mean/std `roc_auc` and `pr_auc`. Shows that ROC AUC is stable while PR AUC rises with prevalence as expected.
-  - Figure: two-panel plot highlighting the invariance/dependence trade-off, reinforcing the paper’s claim that ranking (ROC) is prevalence agnostic but precision–recall shifts under skew.
-- **Exp3 table & figure** (`results/exp3_ess_vs_weight/...`):
-  - Table: ESS fraction for each `alpha`.
-  - Figure: log-scale plot of ESS fraction vs. `alpha`, illustrating the same variance inflation the paper predicts when class weights grow.
-- **Exp4 table & figure** (`results/exp4_concept_drift/...`):
-  - Table: aggregated risk for no correction, offset, and retrain.
-  - Figure: bar chart showing that offset correction sticks to the stale decision boundary while retraining on the drifted data lowers risk, typifying concept drift failure modes.
-- **Exp5 table & figure** (`results/exp5_realdata_breast_cancer/...`):
-  - Table: real-data risk averages per strategy across prevalence grid.
-  - Figure: risk vs. prevalence on breast-cancer data, demonstrating that offset correction still helps but that practical solvers may issue LBFGS convergence warnings (scale/max_iter if you rerun).
+1. Install the project, which also installs the `dos-expN` console scripts:
+
+   ```sh
+   python -m pip install -e ".[dev]"
+   ```
+
+2. Run any experiment. Each writes `tables/`, `figures/`, and a `_summary.json`
+   into `results/<exp_name>/<utc-timestamp>/`:
+
+   | Command | Experiment |
+   | --- | --- |
+   | `dos-exp1 --results-dir results` | Synthetic label shift with offset correction |
+   | `dos-exp2 --results-dir results` | ROC AUC invariance, PR-AUC dependence |
+   | `dos-exp3 --results-dir results` | ESS against the class-weight multiplier |
+   | `dos-exp4 --results-dir results` | Concept drift: offset vs. retraining |
+   | `dos-exp5 --results-dir results` | Breast cancer label shift replication |
+   | `dos-exp6 --results-dir results` | Calibration vs. offset under label shift |
+   | `dos-exp7 --results-dir results` | Drift-type sweep (covariance, feature, label) |
+   | `dos-exp8 --results-dir results` | Multimodal label shift |
+   | `dos-exp9 --results-dir results` | Covertype label shift (downloads a dataset) |
+   | `dos-exp10 --results-dir results` | Credit-card fraud benchmark (downloads a dataset) |
+   | `dos-exp11 --results-dir results` | High-variance medical-style benchmark |
+
+   Equivalently, run a module directly, which needs no install:
+   `python src/drift_or_shift/experiments/exp1_label_shift_synth.py --results-dir results`.
+
+3. Every script accepts `--help`. Shared flags (`--n-train`, `--n-test`, `--d`,
+   `--pi-tests`, `--seeds`, `--c10`, `--c01`) let you cut a run down for a quick
+   check. Point `--results-dir` at the same base each time so artifacts group
+   under `results/<exp>/<timestamp>/`.
+
+4. Aggregate everything into a reviewable dashboard:
+
+   ```sh
+   python scripts/aggregate_results.py --results-dir results \
+       --output reports/dashboard.md --figure reports/best_risk.png
+   ```
+
+`results/` is regenerated output and is not committed.
+
+## What each artifact shows
+
+**Exp1 — synthetic label shift.** The table gives mean/std risk for *no
+correction*, *offset*, and *oracle* across the `pi_test` grid; the figure plots
+risk against prevalence. An additive logit offset recovers the test posterior,
+pulling the risk curve close to the oracle. The gain is largest where the shift
+is largest, and exactly zero at `pi_test = pi_train`, where no correction is
+called for.
+
+**Exp2 — ROC AUC invariance.** Mean/std `roc_auc` and `pr_auc` across the grid,
+as a two-panel figure. A constant offset preserves the ranking of scores, so ROC
+AUC barely moves; PR-AUC depends on the positive rate and climbs steeply with it.
+This is the cleanest statement of why a prevalence-invariant metric can hide a
+problem that a prevalence-sensitive one exposes.
+
+**Exp3 — effective sample size.** ESS fraction for each `alpha`, on a log-scale
+figure. The Kish-style formula predicts the decay, and the curve shows how much
+effective data aggressive class weighting throws away.
+
+**Exp4 — concept drift.** Aggregated risk for no correction, offset, and
+retraining, as a bar chart. When the class-conditionals move, the offset is
+*inert*: it produces exactly the same risk as doing nothing, because it only
+shifts a prior that is no longer the problem. Retraining on the drifted data is
+what lowers risk.
+
+**Exp5 — breast cancer.** Real-data risk per strategy across the prevalence
+grid. Offset correction helps for `pi_test` below the training prior — but at
+`pi_test=0.5` it is **worse than doing nothing** (`0.0519` vs `0.0484`). See the
+caveat below. LBFGS may emit convergence warnings here; scale the features or
+raise `max_iter` if that matters for your run.
+
+**Exp6–Exp11.** Calibration under label shift (temperature and isotonic), a
+sweep over drift types, multimodal mixtures, and three higher-dimensional or
+real-world benchmarks. Each follows the same artifact layout, and each records
+its configuration in `_summary.json`.
 
 ## Conceptual takeaways
-- Label shift only (Exp1 & Exp5) keeps the curves ordered as predicted: offset correction closes the gap to the oracle while preserving ranking.
-- Aggregated ROC and PR metrics (Exp2) give a first-principles view of why ROC curves survive prevalence shifts but precision–recall does not.
-- Concept drift (Exp4) breaks the offset strategy, so retraining is the only path to lower risk even when prevalences match training.
+
+- **Label shift is correctable without retraining.** Exp1 shows the offset
+  closing most of the gap to the oracle while preserving ranking.
+- **Concept drift is not.** Exp4 shows the offset making no difference at all,
+  because the quantity it corrects is not the one that moved. This is the
+  distinction the whole repository is built around.
+- **Metric choice decides what you can see.** Exp2 shows ROC AUC surviving a
+  prevalence shift that PR-AUC registers strongly. Reporting only the invariant
+  metric would hide the shift entirely.
+- **The correction is not unconditionally free.** On real, finite data with an
+  imperfectly calibrated model, the offset can overshoot: Exp5 at `pi_test=0.5`
+  ends up worse than no correction. The synthetic experiments never show this,
+  because the model there is well specified. Treat the synthetic result as the
+  idealized case and check the correction on your own data.
+
+## Verification
+
+`tests/test_documented_results.py` re-runs the configurations behind
+`RESULTS_DIGEST.md` on every CI build and asserts both the published figures and
+the qualitative claims above — including the Exp5 exception, so it cannot quietly
+disappear or quietly become a universal claim.

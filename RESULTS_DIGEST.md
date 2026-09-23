@@ -1,6 +1,17 @@
 # Results Digest
 
-This digest summarizes the latest run of each experiment, links the generated artifacts, and highlights how the numbers support (or nuance) the claims in _ssrn-6052514_.
+This digest summarizes a reference run of each experiment and highlights how the
+numbers support (or nuance) the claims in _ssrn-6052514_.
+
+**Reproducing these numbers.** `results/` is regenerated output and is not
+committed, so the artifact paths below are illustrative of a run's layout
+rather than files you will find in a fresh clone. Each entry records the exact
+configuration; run the matching `dos-expN` command with those flags to
+regenerate it.
+
+**These figures are enforced.** `tests/test_documented_results.py` re-runs the
+configurations below on every CI build and checks both the published figures
+and the qualitative claims, so this digest cannot silently go stale.
 
 ## Experiment 1 – Synthetic label shift with offset correction
 
@@ -11,7 +22,9 @@ This digest summarizes the latest run of each experiment, links the generated ar
 ## Experiment 2 – AUC invariance and PR-AUC dependence
 
 - **Config & provenance:** Same data configuration as Exp1, timestamp `2026-01-14T13:26:41.496639`. Table: `results/exp2_auc_pr_invariance/20260114_132641/tables/exp2_auc_pr_invariance.csv`. Figure: `results/exp2_auc_pr_invariance/20260114_132641/figures/exp2_auc_pr_invariance.png` (two-panel plot of ROC AUC and PR AUC).
-- **Key metrics:** ROC AUC stays in `[0.94, 0.96]` across `pi_test` grid, while PR AUC climbs from ~0.35 (pi=0.01) to ~0.94 (pi=0.5). This mirrors the claim that ROC AUC is prevalence-invariant while PR AUC depends on the positive rate.
+- **Key metrics:** ROC AUC stays in `[0.93, 0.96]` across the `pi_test` grid (observed range
+  `0.938`-`0.957`; an earlier revision of this digest quoted `[0.94, 0.96]`, which the
+  `0.9382` at `pi_test=0.1` falls outside), while PR AUC climbs from ~0.35 (pi=0.01) to ~0.94 (pi=0.5). This mirrors the claim that ROC AUC is prevalence-invariant while PR AUC depends on the positive rate.
 - **Observation/deviation:** Prevalence dependence of PR AUC is even steeper than the paper's toy curve, hinting that highly imbalanced scenarios amplify the precision drop faster.
 
 ## Experiment 3 – ESS vs. class-weight multiplier
@@ -29,5 +42,13 @@ This digest summarizes the latest run of each experiment, links the generated ar
 ## Experiment 5 – Breast cancer label shift replication
 
 - **Config & provenance:** Stratified train/test split of `sklearn.datasets.load_breast_cancer`, resampled to `pi_train=0.2`, `pi_tests` as above, `seeds=[0,1,2,3,4]`, timestamp `2026-01-14T13:28:15.064888`. Table: `results/exp5_realdata_breast_cancer/20260114_132814/tables/exp5_realdata_breast_cancer.csv`. Figure: `results/exp5_realdata_breast_cancer/20260114_132814/figures/exp5_realdata_breast_cancer.png`.
-- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0246`, `risk_offset=0.0091`, `risk_oracle=0.0035`; at `pi_test=0.5`, `risk_none=0.0484`, `risk_offset=0.0519`, `risk_oracle=0.0421`. Offset correction again closes the gap under label shift, but convergence warnings from LBFGS (logged during the run) remind us to normalize features or increase `max_iter` for clinical splits.
-- **Observation/deviation:** Offset correction still reduces risk, but occasional solver warnings (reported in the run log) justify documenting the need for stronger regularization or scaling on real data.
+- **Key metrics:** At `pi_test=0.01`, `risk_none=0.0246`, `risk_offset=0.0091`, `risk_oracle=0.0035`; at `pi_test=0.5`, `risk_none=0.0484`, `risk_offset=0.0519`, `risk_oracle=0.0421`. Offset correction closes the gap for `pi_test` **below** the training prior, but at
+  `pi_test=0.5` it is **worse than doing nothing** (`0.0519` vs `0.0484`). Convergence
+  warnings from LBFGS (logged during the run) also suggest normalizing features or
+  raising `max_iter` for clinical splits.
+- **Observation/deviation:** A genuine exception to the synthetic result. On real,
+  finite data with an imperfectly calibrated model, the theoretically free offset can
+  overshoot: correcting from `pi_train=0.2` up to `pi_test=0.5` increases risk here.
+  The synthetic experiments never show this because the model is well specified there.
+  Pinned by `test_exp5_offset_is_worse_at_the_balanced_prevalence` so it cannot quietly
+  disappear, or quietly become a universal claim.
