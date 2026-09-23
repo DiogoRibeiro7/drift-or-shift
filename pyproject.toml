@@ -47,15 +47,15 @@ dependencies = [
 dev = [
     "black==26.5.1",
     "build==1.6.1",
-    "mypy==1.20.2",
+    "mypy==2.3.1",
     "pandas-stubs==2.3.3.260113",
-    "pre-commit==4.3.0",
+    "pre-commit==4.6.2",
     "pytest==9.1.1",
-    "pytest-cov==6.3.0",
-    "ruff==0.16.1",
+    "pytest-cov==7.1.0",
+    "ruff==0.16.8",
     # tomllib is stdlib from 3.11; 3.10 needs the backport.
     "tomli==2.4.1; python_version < '3.11'",
-    "types-PyYAML==6.0.12.20250915",
+    "types-PyYAML==6.0.12.20260906",
 ]
 
 [project.urls]
