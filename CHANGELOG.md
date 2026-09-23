@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tests/test_release_tools.py`.
 - A security workflow: CodeQL, a `pip-audit` dependency audit, and `zizmor`
   linting of the workflows themselves, on push, pull request, and weekly.
+  `tools/check_sarif.py` gates the build on the report's contents, because
+  zizmor exits 0 when asked for SARIF output even when it found problems.
 - Workflow hardening found by zizmor: tag names are no longer interpolated
   into shell (a code-injection vector), and checkouts no longer persist
   credentials.

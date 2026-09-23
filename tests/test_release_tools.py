@@ -7,6 +7,7 @@ somebody pushes a tag.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ TOOLS = REPO_ROOT / "tools"
 sys.path.insert(0, str(TOOLS))
 
 from changelog_section import extract_section  # noqa: E402
+from check_sarif import collect_results, describe  # noqa: E402
 from print_version import read_version  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -156,3 +158,102 @@ def test_changelog_script_requires_an_argument() -> None:
 
     assert result.returncode == 2
     assert "usage" in result.stderr
+
+
+# ---------------------------------------------------------------------------
+# check_sarif
+# ---------------------------------------------------------------------------
+
+
+SARIF_WITH_FINDING = {
+    "runs": [
+        {
+            "results": [
+                {
+                    "ruleId": "zizmor/template-injection",
+                    "message": {"text": "code injection via template expansion"},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": "release.yml"},
+                                "region": {"startLine": 36},
+                            }
+                        }
+                    ],
+                }
+            ]
+        }
+    ]
+}
+
+
+def test_collect_results_spans_every_run() -> None:
+    report = {"runs": [{"results": [{"ruleId": "a"}]}, {"results": [{"ruleId": "b"}]}]}
+
+    assert [r["ruleId"] for r in collect_results(report)] == ["a", "b"]
+
+
+def test_collect_results_of_a_clean_report_is_empty() -> None:
+    assert collect_results({"runs": [{"results": []}]}) == []
+    assert collect_results({}) == []
+
+
+def test_describe_names_the_rule_and_location() -> None:
+    line = describe(SARIF_WITH_FINDING["runs"][0]["results"][0])
+
+    assert "template-injection" in line
+    assert "release.yml:36" in line
+
+
+def test_describe_tolerates_a_result_without_a_location() -> None:
+    assert "some-rule" in describe({"ruleId": "some-rule", "message": {"text": "x"}})
+
+
+def _run_check(path: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(TOOLS / "check_sarif.py"), str(path)],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_check_sarif_fails_when_the_report_has_findings(tmp_path: Path) -> None:
+    report = tmp_path / "z.sarif"
+    report.write_text(json.dumps(SARIF_WITH_FINDING), encoding="utf-8")
+
+    result = _run_check(report)
+
+    assert result.returncode == 1
+    assert "::error::" in result.stdout
+
+
+def test_check_sarif_passes_on_a_clean_report(tmp_path: Path) -> None:
+    report = tmp_path / "z.sarif"
+    report.write_text(json.dumps({"runs": [{"results": []}]}), encoding="utf-8")
+
+    assert _run_check(report).returncode == 0
+
+
+def test_check_sarif_treats_a_missing_report_as_an_error(tmp_path: Path) -> None:
+    """An audit that never ran must not look like an audit that passed."""
+    result = _run_check(tmp_path / "absent.sarif")
+
+    assert result.returncode == 2
+    assert "did not run" in result.stderr
+
+
+def test_check_sarif_treats_an_empty_report_as_an_error(tmp_path: Path) -> None:
+    report = tmp_path / "z.sarif"
+    report.write_text("", encoding="utf-8")
+
+    assert _run_check(report).returncode == 2
+
+
+def test_check_sarif_rejects_malformed_json(tmp_path: Path) -> None:
+    report = tmp_path / "z.sarif"
+    report.write_text("{not json", encoding="utf-8")
+
+    result = _run_check(report)
+
+    assert result.returncode == 2
+    assert "not valid SARIF" in result.stderr
