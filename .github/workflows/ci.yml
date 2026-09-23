@@ -91,6 +91,8 @@ jobs:
           pytest
           --cov=drift_or_shift
           --cov=caliblab
+          --cov=scripts
+          --cov=reproduce
           --cov-report=term-missing
           --cov-report=xml
           --cov-report=html

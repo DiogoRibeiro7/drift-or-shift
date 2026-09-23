@@ -31,13 +31,18 @@ def run_make_tables(config_path: Path | str) -> Path:
     config = _load_config(config_path)
     raw_dir = Path(config["outputs"]["raw"])
     df = _load_raw_data(raw_dir)
-    grouped = df.groupby(["estimator", "calibration", "fold"])
+    # Select the columns the metrics need before applying. Operating on the
+    # grouping columns too is deprecated in pandas 2.2, and the alternative
+    # flag (include_groups=False) does not exist below that version.
+    grouped = df.groupby(["estimator", "calibration", "fold"])[["y_true", "y_prob"]]
     metrics = grouped.apply(
         lambda group: pd.Series(
             {
                 "brier": float(brier_score_loss(group["y_true"], group["y_prob"])),
+                # No eps= here: scikit-learn deprecated it in 1.3 and removed
+                # it in 1.5, and now clips probabilities internally.
                 "log_loss": float(
-                    log_loss(group["y_true"], group["y_prob"], eps=1e-15, labels=[0, 1])
+                    log_loss(group["y_true"], group["y_prob"], labels=[0, 1])
                 ),
                 "roc_auc": float(roc_auc_score(group["y_true"], group["y_prob"])),
             }

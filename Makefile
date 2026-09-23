@@ -36,7 +36,7 @@ test-network: ## Run the dataset-downloading tests (exp9, exp10)
 	$(PYTHON) -m pytest -m network
 
 test-cov: ## Run tests with a coverage report
-	$(PYTHON) -m pytest --cov=drift_or_shift --cov=caliblab \
+	$(PYTHON) -m pytest --cov=drift_or_shift --cov=caliblab --cov=scripts --cov=reproduce \
 		--cov-report=term-missing --cov-report=html
 
 check: lint format-check typecheck test ## Run everything CI runs

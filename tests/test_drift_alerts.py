@@ -71,3 +71,68 @@ def test_threshold_config(tmp_path: Path) -> None:
     written = write_drift_alerts(summaries, path, thresholds=thresholds)
     assert written.exists()
     assert "expY" in written.read_text()
+
+
+def test_alerts_fire_on_the_key_shape_experiments_actually_write() -> None:
+    """The alerting was dead code, and these tests were why.
+
+    Every other test in this module hand-builds a summary keyed on the bare
+    metric name, e.g. `feature_max_ks`. No experiment writes that: they
+    aggregate through `aggregate_mean_std`, which emits `feature_max_ks_mean`.
+    The thresholds therefore matched nothing in a real run, `--fail-on-alerts`
+    could never trip, and `watch_results.py` watched for something that could
+    not happen -- while these tests stayed green.
+
+    This builds the summary through the real aggregation function instead of
+    asserting against a hand-written shape.
+    """
+    import pandas as pd
+
+    from drift_or_shift import DRIFT_FEATURE_METRICS, aggregate_mean_std
+    from drift_or_shift.reporting import detect_drift_alerts
+
+    threshold = DRIFT_ALERT_THRESHOLDS["feature_max_ks"]
+    frame = pd.DataFrame(
+        [
+            {"pi_test": 0.1, **dict.fromkeys(DRIFT_FEATURE_METRICS, threshold + 0.2)},
+            {"pi_test": 0.1, **dict.fromkeys(DRIFT_FEATURE_METRICS, threshold + 0.2)},
+        ]
+    )
+    aggregated = aggregate_mean_std(
+        frame, metrics=tuple(DRIFT_FEATURE_METRICS), groupby="pi_test"
+    )
+    summary = {
+        "exp_name": "exp_synthetic",
+        "aggregated": aggregated.to_dict(orient="list"),
+    }
+
+    # The shape really is `<metric>_mean`, not the bare name.
+    assert "feature_max_ks_mean" in summary["aggregated"]
+    assert "feature_max_ks" not in summary["aggregated"]
+
+    alerts = detect_drift_alerts(summary)
+
+    assert alerts, "no alert fired on a summary shaped the way experiments write them"
+    assert any(metric == "feature_max_ks" for metric, _, _ in alerts)
+
+
+def test_no_alerts_when_the_aggregated_metrics_are_quiet() -> None:
+    """The mirror of the above: the same real shape must stay silent."""
+    import pandas as pd
+
+    from drift_or_shift import DRIFT_FEATURE_METRICS, aggregate_mean_std
+    from drift_or_shift.reporting import detect_drift_alerts
+
+    frame = pd.DataFrame(
+        [
+            {"pi_test": 0.1, **dict.fromkeys(DRIFT_FEATURE_METRICS, 0.0)},
+            {"pi_test": 0.1, **dict.fromkeys(DRIFT_FEATURE_METRICS, 0.0)},
+        ]
+    )
+    aggregated = aggregate_mean_std(
+        frame, metrics=tuple(DRIFT_FEATURE_METRICS), groupby="pi_test"
+    )
+
+    assert not detect_drift_alerts(
+        {"exp_name": "quiet", "aggregated": aggregated.to_dict(orient="list")}
+    )
