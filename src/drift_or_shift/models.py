@@ -1,4 +1,4 @@
-"""Model training helpers for drift-shift-pipeline experiments."""
+"""Model training helpers for drift-or-shift experiments."""
 
 from __future__ import annotations
 

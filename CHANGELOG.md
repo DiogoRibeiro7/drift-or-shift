@@ -144,12 +144,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The distribution is renamed from `drift-shift-pipeline` to `drift-or-shift`**,
+  so it matches the import package `drift_or_shift`. The project had five names
+  for what is essentially two things; the distribution was the odd one out. It
+  has never been published to PyPI, so nothing downstream breaks. Repository
+  URLs, the PyPI trusted-publishing target, badges, and the citation block all
+  follow. The import package, the console scripts, and `caliblab` are unchanged.
+- `drift_shift_pipeline` remains importable but now emits a `DeprecationWarning`.
+  It existed so the old distribution name worked as an import; with the
+  distribution renamed it is the last remnant of that name, kept only so
+  existing local scripts keep working.
+
 - CI test matrix broadened to Python 3.10–3.13, plus Windows and macOS spot checks.
 - `pyproject.toml` metadata completed: real author, project URLs, classifiers,
   keywords, and a `dynamic` version sourced from `drift_or_shift.__version__`.
 - Pytest, coverage, Black, and Mypy configuration consolidated into `pyproject.toml`.
 
 ### Removed
+
+- `paper/ssrn-6052514.pdf`. Redistributing the PDF from a public MIT-licensed
+  repository is a licensing question the repository cannot answer for itself,
+  and it is not needed to run or understand the code. `README.md`,
+  `ROADMAP.md` and `RESULTS_DIGEST.md` now link to the paper on SSRN instead.
 
 - The 30 generated artifacts committed under `reports/` -- fifteen dashboards
   and fifteen figures, all produced over two days in January 2026. They had
@@ -174,5 +190,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial research pipeline: synthetic label shift, offset correction, ESS,
   calibration, drift variants, and experiments 1–11.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/drift-shift-pipeline/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/DiogoRibeiro7/drift-shift-pipeline/releases/tag/v0.1.0
+[Unreleased]: https://github.com/DiogoRibeiro7/drift-or-shift/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/DiogoRibeiro7/drift-or-shift/releases/tag/v0.1.0

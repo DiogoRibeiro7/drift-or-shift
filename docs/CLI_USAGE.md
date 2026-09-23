@@ -1,6 +1,6 @@
 # CLI Usage Guide
 
-This document describes the command-line interface for the drift-shift-pipeline scripts and common usage patterns.
+This document describes the command-line interface for the drift-or-shift scripts and common usage patterns.
 
 ## 1) `scripts/drift_alerts.py`
 

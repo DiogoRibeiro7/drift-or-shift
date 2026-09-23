@@ -12,5 +12,4 @@
 *.whl binary
 
 # Keep generated/vendored noise out of diffs and language stats.
-paper/** linguist-documentation
 reports/** linguist-generated
