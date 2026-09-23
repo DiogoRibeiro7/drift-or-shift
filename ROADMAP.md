@@ -17,6 +17,24 @@ Non-goals:
 
 ---
 
+## Status (September 2026)
+
+Milestones 0-15 are complete. The project outgrew this plan in two directions:
+eleven experiments rather than five, and a much larger engineering surface than
+Milestone 13's "add a CI workflow" anticipated. Milestones 16-18 below record
+that work; the sections above are kept as the original plan.
+
+Current state:
+
+- 11 experiments, all runnable via `dos-expN` console scripts.
+- 292 tests, ~89% coverage measured across `src/`, `scripts/` and `reproduce/`.
+- CI on Python 3.10-3.13 plus Windows and macOS, with lint, format, types,
+  a build-and-install check, security scanning, and pre-commit.
+- Tag-triggered releases with PyPI trusted publishing.
+- `RESULTS_DIGEST.md` figures are re-run and asserted on every CI build.
+
+---
+
 ## Success criteria (high level)
 1. `pip install -e .` works and imports succeed.
 2. Running each experiment script produces:
@@ -29,39 +47,30 @@ Non-goals:
 
 ---
 
-## Repository structure (target)
+## Repository structure (actual)
+
+Experiments live inside the package rather than at the top level, so they ship
+with the wheel and back the `dos-expN` console scripts.
+
 ```
 .
 ├─ pyproject.toml
-├─ README.md
-├─ ROADMAP.md
+├─ Makefile                 # make check / build / security
 ├─ src/
-│  └─ drift_or_shift/
-│     ├─ __init__.py
-│     ├─ shift.py
-│     ├─ ess.py
-│     ├─ metrics.py
-│     ├─ data_synth.py
-│     ├─ models.py
-│     ├─ io_utils.py
-│     └─ plotting.py
-├─ experiments/
-│  ├─ exp1_label_shift_synth.py
-│  ├─ exp2_auc_pr_invariance.py
-│  ├─ exp3_ess_vs_weight.py
-│  ├─ exp4_concept_drift.py
-│  └─ exp5_realdata_breast_cancer.py
-├─ results/
-│  ├─ figures/
-│  └─ tables/
-└─ tests/
-   ├─ test_shift.py
-   ├─ test_ess.py
-   ├─ test_metrics.py
-   └─ test_invariances.py
+│  ├─ drift_or_shift/       # the library
+│  │  ├─ shift.py  ess.py  metrics.py  models.py
+│  │  ├─ data_synth.py  calibration.py  drift_monitor.py
+│  │  ├─ drift_variants.py  plotting.py  reporting.py  io_utils.py
+│  │  └─ experiments/       # exp1..exp11 + _common.py
+│  ├─ drift_shift_pipeline/ # deprecated import alias
+│  └─ caliblab/             # calibration benchmarking helpers
+├─ scripts/                 # aggregate_results, drift_alerts, watch_results, ...
+├─ reproduce/               # separate calibration-benchmark replication
+├─ tools/                   # release helpers used by the workflow
+├─ tests/
+├─ docs/  notes/  reports/
+└─ results/                 # generated, not committed
 ```
-
----
 
 ## Dependencies (minimal)
 Required:
@@ -81,7 +90,7 @@ Dev:
 
 ---
 
-## Milestone 0 — Project scaffolding
+## Milestone 0 — Project scaffolding (complete)
 ### Tasks
 - Create `pyproject.toml` with:
   - project metadata
@@ -99,7 +108,7 @@ Dev:
 
 ---
 
-## Milestone 1 — Core math primitives (label shift + thresholds)
+## Milestone 1 — Core math primitives (label shift + thresholds) (complete)
 This milestone builds the core library functionality.
 
 ### 1.1 `shift.py`
@@ -134,7 +143,7 @@ Notes:
 
 ---
 
-## Milestone 2 — ESS formula module
+## Milestone 2 — ESS formula module (complete)
 ### 2.1 `ess.py`
 Implement:
 - `effective_sample_size(n: int, pi: float, alpha: float) -> float`
@@ -153,7 +162,7 @@ Implement:
 
 ---
 
-## Milestone 3 — Synthetic data generator (label shift and drift)
+## Milestone 3 — Synthetic data generator (label shift and drift) (complete)
 ### 3.1 `data_synth.py`
 Implement synthetic generator matching the paper setup:
 
@@ -186,7 +195,7 @@ Implement synthetic generator matching the paper setup:
 
 ---
 
-## Milestone 4 — Models and metrics
+## Milestone 4 — Models and metrics (complete)
 ### 4.1 `models.py`
 Implement minimal training/prediction wrappers:
 - `fit_logistic_regression(X_train, y_train, *, class_weight=None, C=1.0, max_iter=1000, rng=None)`
@@ -212,7 +221,7 @@ Implement:
 
 ---
 
-## Milestone 5 — Experiment harness (reproducible runner + IO)
+## Milestone 5 — Experiment harness (reproducible runner + IO) (complete)
 ### 5.1 `io_utils.py`
 - `ensure_dir(path) -> None`
 - `save_table(df, path)`
@@ -241,7 +250,7 @@ Create `experiments/_common.py`:
 
 ---
 
-## Milestone 6 — Experiment 1 (Synthetic label shift + offset correction)
+## Milestone 6 — Experiment 1 (Synthetic label shift + offset correction) (complete)
 Script: `experiments/exp1_label_shift_synth.py`
 
 ### Method
@@ -270,7 +279,7 @@ Aggregate over seeds.
 
 ---
 
-## Milestone 7 — Experiment 2 (AUC invariance + PR-AUC dependence)
+## Milestone 7 — Experiment 2 (AUC invariance + PR-AUC dependence) (complete)
 Script: `experiments/exp2_auc_pr_invariance.py`
 
 ### Method
@@ -288,7 +297,7 @@ Script: `experiments/exp2_auc_pr_invariance.py`
 
 ---
 
-## Milestone 8 — Experiment 3 (ESS vs class weighting)
+## Milestone 8 — Experiment 3 (ESS vs class weighting) (complete)
 Script: `experiments/exp3_ess_vs_weight.py`
 
 ### Method
@@ -300,7 +309,7 @@ Script: `experiments/exp3_ess_vs_weight.py`
 
 ---
 
-## Milestone 9 — Experiment 4 (Concept drift)
+## Milestone 9 — Experiment 4 (Concept drift) (complete)
 Script: `experiments/exp4_concept_drift.py`
 
 ### Method
@@ -321,7 +330,7 @@ Script: `experiments/exp4_concept_drift.py`
 
 ---
 
-## Milestone 10 — Experiment 5 (Real dataset replication: Breast Cancer)
+## Milestone 10 — Experiment 5 (Real dataset replication: Breast Cancer) (complete)
 Script: `experiments/exp5_realdata_breast_cancer.py`
 
 ### Method
@@ -342,7 +351,7 @@ Script: `experiments/exp5_realdata_breast_cancer.py`
 
 ---
 
-## Milestone 11 — CLI entrypoints (optional but useful)
+## Milestone 11 — CLI entrypoints (optional but useful) (complete)
 Add console scripts:
 - `dos-exp1`, `dos-exp2`, ...
 
@@ -361,7 +370,7 @@ Acceptance criteria:
 
 ---
 
-## Milestone 12 — Documentation polish
+## Milestone 12 — Documentation polish (complete)
 ### Tasks
 - Update `README.md`:
   - Label shift vs concept drift (short explanation)
@@ -375,7 +384,7 @@ Acceptance criteria:
 
 ---
 
-## Milestone 13 - CI + quality gates (recommended)
+## Milestone 13 - CI + quality gates (recommended) (complete)
 ### Tasks
 - Add GitHub Actions workflow:
   - `ruff check`
@@ -412,6 +421,91 @@ Acceptance criteria:
 - Versioned release notes exist and a maintainers checklist (e.g., `make release`) captures verification steps.
 - A minimal sanity test script runs in under a minute and exits cleanly; document how to run it.
 - Future work appendix lists at least three concrete extensions and their expected learning goals.
+
+---
+
+## Milestone 16 - Engineering hardening (complete)
+
+Milestone 13 asked for a CI workflow. What the project actually needed was
+considerably more, most of it prompted by defects found along the way.
+
+### Tasks
+ - [x] Fix the distribution: `tool.setuptools.packages` was the literal string
+       `"find:"`, so `pip install .` failed and the wheel shipped one file.
+ - [x] Fix the CI matrix: unquoted `3.10` is the YAML float `3.1`, so no job had
+       ever run on a real 3.10 interpreter.
+ - [x] Widen CI to 3.10-3.13 plus Windows and macOS, with a build-and-install
+       job that installs the wheel into a clean virtualenv and runs a console script.
+ - [x] Add security scanning: CodeQL, `pip-audit`, and `zizmor` over the workflows.
+ - [x] Add tag-triggered releases with PyPI trusted publishing, gated on a
+       `pypi` environment so they cannot fire by accident.
+ - [x] Pin dev tooling exactly and keep `pyproject.toml` and
+       `.pre-commit-config.yaml` in lockstep, enforced by `tests/test_tooling_pins.py`.
+ - [x] Raise coverage from 44% to ~89%, measured across `scripts/` and
+       `reproduce/` as well as the packages.
+ - [x] Rename the distribution to `drift-or-shift` so it matches the import name.
+ - [x] Add LICENSE, CHANGELOG, SECURITY, CODE_OF_CONDUCT, issue and PR
+       templates, Dependabot, and a Makefile.
+
+### Acceptance criteria
+- `make check` reproduces what CI runs, and a green local run means a green pipeline.
+- A clean `pip install` of the built wheel imports every package and runs `dos-exp1`.
+
+---
+
+## Milestone 17 - Verified results (complete)
+
+The digest published specific risks and AUCs and nothing checked them.
+
+### Tasks
+ - [x] Re-run every documented configuration in CI and assert both the published
+       figures and the qualitative claims (`tests/test_documented_results.py`).
+ - [x] Document all eleven experiments in `RESULTS_DIGEST.md`, not five.
+ - [x] Correct two claims that contradicted their own numbers: the ROC AUC band,
+       and Exp5's "offset correction closes the gap".
+ - [x] Fix Exp5 and Exp9, which fitted on raw unscaled features so LBFGS never
+       converged and results differed by platform. Their figures were re-derived.
+ - [x] Fix drift alerting, which never fired: thresholds were keyed on
+       `feature_max_ks` while experiments write `feature_max_ks_mean`.
+
+### Acceptance criteria
+- The digest cannot go stale silently; CI fails if a published figure moves.
+- Qualitative claims are asserted strictly, exact figures with a tolerance that
+  absorbs platform arithmetic.
+
+---
+
+## Milestone 18 - Open work
+
+Nothing here is blocking; these are the known remaining items.
+
+### Tasks
+ - [ ] Publish `0.1.0a1` to PyPI to reserve the name and give the release
+       workflow its first real run. Needs a pending publisher on PyPI and a
+       `pypi` environment on the repository.
+ - [ ] Enable branch protection on `main` requiring the CI checks. A direct push
+       has already broken `main` once.
+ - [ ] Decide the relationship with `drift_control` (see below).
+ - [ ] Consider whether `caliblab` belongs in this repository or its own.
+ - [ ] `calibration_holdout` in `caliblab` is opt-in; revisit the default if a
+       harder dataset shows the leakage matters.
+
+---
+
+## Relationship with `drift_control`
+
+`DiogoRibeiro7/drift_control` is a production drift-monitoring library. The two
+projects are complementary, with one overlap and one gap:
+
+- **Duplicated.** `drift_or_shift.drift_monitor._ks_statistic` is the same
+  algorithm as `drift_control.distances.ks.ks_statistic`, written twice.
+  `drift_control` also has PSI, JS, KL, MMD, Wasserstein, energy, chi2 and TVD,
+  where this repository has an ad-hoc subset. Either depend on it for drift
+  statistics, or keep the copy deliberately rather than by accident.
+- **Missing there.** `drift_control` has no label-shift handling at all: no
+  prior correction, no logit offset, no prevalence. `shift.py` and `ess.py` are
+  roughly 150 lines that would fill a real gap in a library whose job is
+  controlling drift.
 
 ---
 
