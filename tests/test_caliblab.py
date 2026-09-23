@@ -11,6 +11,7 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from caliblab import benchmark
@@ -18,6 +19,15 @@ from caliblab import benchmark
 ESTIMATORS = [
     {"name": "logistic", "type": "logistic", "params": {"solver": "liblinear"}},
 ]
+
+
+@pytest.fixture
+def larger_dataset() -> tuple[np.ndarray, np.ndarray]:
+    """Big enough that a held-out calibration split still has both classes."""
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(300, 4))
+    y = (X[:, 0] + rng.normal(scale=0.2, size=300) > 0).astype(int)
+    return X, y
 
 
 @pytest.fixture
@@ -79,3 +89,104 @@ def test_unknown_estimator_type_is_rejected(dataset) -> None:
             ["none"],
             cv_params={"n_splits": 2, "random_state": 0},
         )
+
+
+# ---------------------------------------------------------------------------
+# calibration_holdout
+# ---------------------------------------------------------------------------
+
+
+def test_holdout_is_opt_in_and_changes_nothing_by_default(dataset) -> None:
+    """The default must stay bit-for-bit what it was, so published numbers hold."""
+    X, y = dataset
+    params = {"n_splits": 2, "random_state": 0}
+
+    default = benchmark(X, y, ESTIMATORS, ["sigmoid"], cv_params=params)
+    explicit_none = benchmark(
+        X, y, ESTIMATORS, ["sigmoid"], cv_params=params, calibration_holdout=None
+    )
+
+    pd.testing.assert_frame_equal(default, explicit_none)
+
+
+def test_holdout_fits_the_calibrator_on_unseen_data(larger_dataset) -> None:
+    X, y = larger_dataset
+    params = {"n_splits": 2, "random_state": 0}
+
+    default = benchmark(X, y, ESTIMATORS, ["sigmoid"], cv_params=params)
+    holdout = benchmark(
+        X, y, ESTIMATORS, ["sigmoid"], cv_params=params, calibration_holdout=0.3
+    )
+
+    # Same coverage: every test sample still gets exactly one probability.
+    assert sorted(holdout["sample_index"]) == sorted(default["sample_index"])
+    # But a different model, so different probabilities.
+    assert not np.allclose(
+        holdout.sort_values("sample_index")["y_prob"].to_numpy(),
+        default.sort_values("sample_index")["y_prob"].to_numpy(),
+    )
+
+
+@pytest.mark.parametrize("holdout", [0.4, 0.5])
+def test_holdout_still_produces_valid_probabilities(larger_dataset, holdout) -> None:
+    X, y = larger_dataset
+    frame = benchmark(
+        X,
+        y,
+        ESTIMATORS,
+        ["none", "sigmoid", "isotonic"],
+        cv_params={"n_splits": 2, "random_state": 0},
+        calibration_holdout=holdout,
+    )
+
+    assert frame["y_prob"].between(0.0, 1.0).all()
+    assert len(frame) == 3 * len(y)
+
+
+def test_too_small_a_holdout_is_rejected_with_a_useful_message(dataset) -> None:
+    """sklearn's own error names n_splits, not the knob the caller turned."""
+    X, y = dataset
+
+    with pytest.raises(ValueError, match="rarest class"):
+        benchmark(
+            X,
+            y,
+            ESTIMATORS,
+            ["sigmoid"],
+            cv_params={"n_splits": 2, "random_state": 0},
+            calibration_holdout=0.05,
+        )
+
+
+@pytest.mark.parametrize("holdout", [0.0, 1.0, -0.2, 1.5])
+def test_holdout_fraction_must_be_a_proper_fraction(dataset, holdout) -> None:
+    X, y = dataset
+
+    with pytest.raises(ValueError, match="open interval"):
+        benchmark(
+            X,
+            y,
+            ESTIMATORS,
+            ["sigmoid"],
+            cv_params={"n_splits": 2, "random_state": 0},
+            calibration_holdout=holdout,
+        )
+
+
+def test_uncalibrated_arm_sees_the_same_training_data_as_the_calibrated_one(
+    larger_dataset,
+) -> None:
+    """With a holdout, the base model must be trained on the reduced set in
+    both arms, or `none` and `sigmoid` would not be comparable."""
+    X, y = larger_dataset
+    frame = benchmark(
+        X,
+        y,
+        ESTIMATORS,
+        ["none", "sigmoid"],
+        cv_params={"n_splits": 2, "random_state": 0},
+        calibration_holdout=0.3,
+    )
+
+    counts = frame.groupby("calibration")["sample_index"].count()
+    assert counts["none"] == counts["sigmoid"] == len(y)

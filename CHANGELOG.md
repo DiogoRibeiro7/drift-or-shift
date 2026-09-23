@@ -68,6 +68,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `caliblab.benchmark` takes an optional `calibration_holdout`, fitting the
+  calibration map on a held-out slice of each fold's training data instead of
+  on the data the base estimator already saw. The default is unchanged and
+  byte-for-byte identical to before, so no published number moves.
+
+  Earlier notes in this project described the existing behaviour as a leakage
+  problem that would bias calibration optimistically. Measured on the shipped
+  breast-cancer benchmark -- holding the base model and the calibration-set
+  size fixed so only the overlap differed -- the effect on test Brier score is
+  within noise (`-0.0014` to `+0.0006`, standard errors around `0.001`). That
+  is why it is an opt-in rather than a new default.
+  `tests/test_caliblab_leakage.py` re-runs the comparison so the claim stays
+  checked.
 - The published results are now enforced. `tests/test_documented_results.py`
   re-runs the configurations behind `RESULTS_DIGEST.md` on every CI build and
   checks the published figures as well as the qualitative claims, so the digest
