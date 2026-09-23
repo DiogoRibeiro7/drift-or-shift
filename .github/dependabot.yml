@@ -33,6 +33,12 @@ updates:
     schedule:
       interval: weekly
     labels: ["dependencies", "ci"]
+    ignore:
+      # Same constraint as the pip ecosystem above: pandas-stubs 3.x requires
+      # Python >= 3.11 and this project supports 3.10. The mypy hook's stubs
+      # must match the dev extra, so both ecosystems need the ignore.
+      - dependency-name: pandas-stubs
+        versions: [">=3.0"]
     groups:
       pre-commit-hooks:
         patterns: ["*"]
