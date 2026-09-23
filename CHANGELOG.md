@@ -141,6 +141,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The 30 generated artifacts committed under `reports/` -- fifteen dashboards
+  and fifteen figures, all produced over two days in January 2026. They had
+  become actively misleading rather than merely stale: every one published
+  Exp5's pre-convergence-fix figures, including the `risk_offset` of `0.0519`
+  at `pi_test=0.5` that this project has since established was an artifact of
+  an optimizer that never converged. They also linked artifacts under
+  `results/`, which is not committed, using Windows path separators, so the
+  paths resolved on no platform. `reports/README.md` records what the
+  directory is for, and the scripts' default output filenames are now
+  gitignored so an ordinary run cannot re-add them. The files remain in git
+  history.
+
 - `restore_experiments.py`, a one-off migration script left at the repository root.
 - Tracked build artifacts: `src/drift_or_shift.egg-info/` and committed `.pyc` files.
 - `.github/workflows/coverage-command.txt`, a stray note in the workflows directory.
