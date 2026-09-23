@@ -1,0 +1,57 @@
+name: Bug report
+description: Something behaves incorrectly or crashes.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Minimal command or snippet that triggers the problem.
+      render: shell
+      placeholder: |
+        dos-exp1 --pi-train 0.2 --pi-tests 0.05 0.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback or output
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "0.1.0 / 06ed652"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.11.9"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Ubuntu 24.04 / Windows 11 / macOS 15"
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Key dependency versions
+      description: Output of `pip list | grep -E "numpy|scikit-learn|pandas|matplotlib"`
+      render: shell

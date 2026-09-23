@@ -1,6 +1,6 @@
 import numpy as np
 
-from drift_or_shift import ess_fraction, effective_sample_size
+from drift_or_shift import effective_sample_size, ess_fraction
 
 
 def test_effective_sample_size_identity_at_alpha_one() -> None:
@@ -30,4 +30,6 @@ def test_ess_fraction_matches_ratio() -> None:
     n = 120
     pi = 0.25
     alpha = 3.0
-    assert np.isclose(ess_fraction(n, pi, alpha), effective_sample_size(n, pi, alpha) / n)
+    assert np.isclose(
+        ess_fraction(n, pi, alpha), effective_sample_size(n, pi, alpha) / n
+    )

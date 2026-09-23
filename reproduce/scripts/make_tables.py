@@ -12,7 +12,7 @@ from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as handle:
+    with Path(path).open(encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
@@ -44,14 +44,18 @@ def run_make_tables(config_path: Path | str) -> Path:
         )
     )
     metrics = metrics.reset_index()
-    summary = metrics.groupby(["estimator", "calibration"]).agg(
-        brier_mean=("brier", "mean"),
-        brier_std=("brier", _std_ddof0),
-        log_loss_mean=("log_loss", "mean"),
-        log_loss_std=("log_loss", _std_ddof0),
-        roc_auc_mean=("roc_auc", "mean"),
-        roc_auc_std=("roc_auc", _std_ddof0),
-    ).reset_index()
+    summary = (
+        metrics.groupby(["estimator", "calibration"])
+        .agg(
+            brier_mean=("brier", "mean"),
+            brier_std=("brier", _std_ddof0),
+            log_loss_mean=("log_loss", "mean"),
+            log_loss_std=("log_loss", _std_ddof0),
+            roc_auc_mean=("roc_auc", "mean"),
+            roc_auc_std=("roc_auc", _std_ddof0),
+        )
+        .reset_index()
+    )
 
     tables_dir = Path(config["outputs"]["tables"])
     tables_dir.mkdir(parents=True, exist_ok=True)
@@ -61,8 +65,12 @@ def run_make_tables(config_path: Path | str) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Create summary tables from benchmark outputs.")
-    parser.add_argument("--config", required=True, type=Path, help="Path to YAML config.")
+    parser = argparse.ArgumentParser(
+        description="Create summary tables from benchmark outputs."
+    )
+    parser.add_argument(
+        "--config", required=True, type=Path, help="Path to YAML config."
+    )
     args = parser.parse_args()
     run_make_tables(args.config)
 

@@ -10,8 +10,8 @@ import pandas as pd
 
 from drift_or_shift import (
     DEFAULT_COSTS,
-    ExperimentConfig,
     PI_TRAIN,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_logit_offset,
     fit_logistic_regression,
@@ -23,8 +23,8 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
@@ -42,7 +42,13 @@ def _run_smoke(config: ExperimentConfig, results_dir: Path) -> None:
         mu1 = np.zeros(config.d)
         mu1[: min(5, config.d)] = 1.0
         X_train, y_train = make_gaussian_binary(
-            config.n_train, config.d, config.pi_train, mu0, mu1, sigma=1.0, rng=rng_train
+            config.n_train,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1,
+            sigma=1.0,
+            rng=rng_train,
         )
         model = fit_logistic_regression(X_train, y_train, rng=rng_train)
         threshold = threshold_from_costs(config.pi_train, config.c10, config.c01)
@@ -54,14 +60,20 @@ def _run_smoke(config: ExperimentConfig, results_dir: Path) -> None:
             )
             scores = predict_logits(model, X_test)
             decisions_none = (scores >= threshold).astype(int)
-            risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
+            risk_none = risk_cost_sensitive(
+                y_test, decisions_none, config.c10, config.c01
+            )
 
             offset = logit_offset(config.pi_train, pi_test)
             scores_offset = apply_logit_offset(scores, offset)
             decisions_offset = (scores_offset >= threshold).astype(int)
-            risk_offset = risk_cost_sensitive(y_test, decisions_offset, config.c10, config.c01)
+            risk_offset = risk_cost_sensitive(
+                y_test, decisions_offset, config.c10, config.c01
+            )
 
-            _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
+            _, risk_oracle = oracle_threshold_min_risk(
+                y_test, scores, config.c10, config.c01
+            )
             rows.append(
                 {
                     "seed": seed,

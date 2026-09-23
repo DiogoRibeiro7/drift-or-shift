@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    groups:
+      dev-tooling:
+        patterns: ["ruff", "black", "mypy", "pytest*", "pre-commit", "build", "*-stubs", "types-*"]
+      scientific-stack:
+        patterns: ["numpy", "pandas", "scikit-learn", "matplotlib", "pyyaml"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: ["dependencies", "ci"]

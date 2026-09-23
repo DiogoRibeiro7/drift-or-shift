@@ -1,9 +1,0 @@
-numpy
-scikit-learn
-pandas
-matplotlib
-
-[dev]
-pytest
-ruff
-mypy

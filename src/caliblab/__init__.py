@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,11 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
+
+try:  # scikit-learn >= 1.6
+    from sklearn.frozen import FrozenEstimator
+except ImportError:  # pragma: no cover - scikit-learn < 1.6
+    FrozenEstimator = None
 
 _ESTIMATOR_REGISTRY = {
     "logistic": LogisticRegression,
@@ -29,6 +34,20 @@ def _make_estimator(spec: dict, random_state: int | None):
     if estimator_type == "logistic":
         params.setdefault("max_iter", 1000)
     return estimator_cls(**params)
+
+
+def _calibrate_prefit(estimator, method: str) -> CalibratedClassifierCV:
+    """Wrap an already-fitted estimator in a calibrator.
+
+    ``cv="prefit"`` is deprecated in scikit-learn 1.6 and removed in 1.8, so we
+    prefer ``FrozenEstimator`` where it exists and fall back only for older
+    releases still covered by our dependency floor.
+    """
+    if FrozenEstimator is not None:
+        return CalibratedClassifierCV(FrozenEstimator(estimator), method=method)
+    return CalibratedClassifierCV(  # pragma: no cover - scikit-learn < 1.6
+        estimator=estimator, method=method, cv="prefit"
+    )
 
 
 def benchmark(
@@ -57,11 +76,7 @@ def benchmark(
                 estimator.fit(X_train, y_train)
                 predictor = estimator
                 if calibration != "none":
-                    calibrator = CalibratedClassifierCV(
-                        base_estimator=estimator,
-                        method=calibration,
-                        cv="prefit",
-                    )
+                    calibrator = _calibrate_prefit(estimator, calibration)
                     calibrator.fit(X_train, y_train)
                     predictor = calibrator
                 probs = predictor.predict_proba(X_test)[:, 1]

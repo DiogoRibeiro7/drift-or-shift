@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 
@@ -56,7 +56,9 @@ def plot_auc_pr_vs_prevalence(
     return fig
 
 
-def plot_ess_vs_alpha(alpha: Sequence[float], ess_fraction: Sequence[float], *, title: str | None = None):
+def plot_ess_vs_alpha(
+    alpha: Sequence[float], ess_fraction: Sequence[float], *, title: str | None = None
+):
     """Plot effective sample size fraction versus alpha."""
     fig, ax = plt.subplots()
     ax.plot(alpha, ess_fraction, marker="o")

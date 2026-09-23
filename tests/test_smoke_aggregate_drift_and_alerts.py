@@ -16,7 +16,9 @@ def test_aggregate_results_fails_when_drift_threshold_exceeded(tmp_path: Path) -
         "timestamp": "2026-01-01T00:00:00",
         "aggregated": {"feature_max_ks": [0.5]},
     }
-    (results_dir / "exp1_summary.json").write_text(json.dumps(summary), encoding="utf-8")
+    (results_dir / "exp1_summary.json").write_text(
+        json.dumps(summary), encoding="utf-8"
+    )
 
     threshold_config = tmp_path / "thresholds.yaml"
     threshold_config.write_text("feature_max_ks: 0.1", encoding="utf-8")
@@ -56,7 +58,9 @@ def test_aggregate_results_succeeds_when_drift_under_threshold(tmp_path: Path) -
         "timestamp": "2026-01-01T00:00:00",
         "aggregated": {"feature_max_ks": [0.05]},
     }
-    (results_dir / "exp1_summary.json").write_text(json.dumps(summary), encoding="utf-8")
+    (results_dir / "exp1_summary.json").write_text(
+        json.dumps(summary), encoding="utf-8"
+    )
 
     threshold_config = tmp_path / "thresholds.yaml"
     threshold_config.write_text("feature_max_ks: 0.1", encoding="utf-8")

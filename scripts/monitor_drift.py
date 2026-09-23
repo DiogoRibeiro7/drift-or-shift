@@ -23,12 +23,24 @@ def _load_features(path: Path) -> np.ndarray:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Compute drift stats between reference and target data.")
+    parser = argparse.ArgumentParser(
+        description="Compute drift stats between reference and target data."
+    )
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--target", type=Path, required=True)
-    parser.add_argument("--mean-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_mean_diff"])
-    parser.add_argument("--std-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_std_diff"])
-    parser.add_argument("--ks-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_ks"])
+    parser.add_argument(
+        "--mean-threshold",
+        type=float,
+        default=DRIFT_ALERT_THRESHOLDS["feature_max_mean_diff"],
+    )
+    parser.add_argument(
+        "--std-threshold",
+        type=float,
+        default=DRIFT_ALERT_THRESHOLDS["feature_max_std_diff"],
+    )
+    parser.add_argument(
+        "--ks-threshold", type=float, default=DRIFT_ALERT_THRESHOLDS["feature_max_ks"]
+    )
     return parser.parse_args()
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -13,8 +13,13 @@ def _ks_statistic(reference: np.ndarray, target: np.ndarray) -> float:
     reference_sorted = np.sort(reference)
     target_sorted = np.sort(target)
     combined = np.sort(np.concatenate([reference_sorted, target_sorted]))
-    cdf_ref = np.searchsorted(reference_sorted, combined, side="right") / reference_sorted.size
-    cdf_target = np.searchsorted(target_sorted, combined, side="right") / target_sorted.size
+    cdf_ref = (
+        np.searchsorted(reference_sorted, combined, side="right")
+        / reference_sorted.size
+    )
+    cdf_target = (
+        np.searchsorted(target_sorted, combined, side="right") / target_sorted.size
+    )
     return float(np.max(np.abs(cdf_ref - cdf_target)))
 
 
@@ -64,7 +69,7 @@ def multivariate_projection_ks(
         return [0.0]
     stats: list[float] = []
     for _ in range(projections):
-        direction = rng.normal(size=d)
+        direction = np.asarray(rng.normal(size=d), dtype=float)
         norm = np.linalg.norm(direction)
         if norm == 0:
             continue
@@ -75,7 +80,10 @@ def multivariate_projection_ks(
     return stats or [0.0]
 
 
-def univariate_feature_stats(X_ref: Sequence[Sequence[float]], X_target: Sequence[Sequence[float]]) -> list[dict]:
+def univariate_feature_stats(
+    X_ref: Sequence[Sequence[float]] | np.ndarray,
+    X_target: Sequence[Sequence[float]] | np.ndarray,
+) -> list[dict]:
     """Return per-feature drift statistics between reference and target arrays."""
     ref_arr = np.asarray(X_ref, dtype=float)
     target_arr = np.asarray(X_target, dtype=float)

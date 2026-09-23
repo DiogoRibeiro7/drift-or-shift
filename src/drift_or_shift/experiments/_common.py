@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Sequence
+from datetime import datetime, timezone
+from typing import SupportsFloat, cast
 
 import numpy as np
 import pandas as pd
 
 from drift_or_shift.drift_monitor import (
-    covariance_frobenius_diff,
     correlation_mean_diff,
+    covariance_frobenius_diff,
     feature_drift_summary,
     multivariate_projection_ks,
     univariate_feature_stats,
@@ -57,7 +58,7 @@ class ExperimentConfig:
             "seeds": list(self.seeds),
             "c10": self.c10,
             "c01": self.c01,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -66,6 +67,7 @@ def _std_ddof0(series: pd.Series) -> float:
 
 
 _std_ddof0.__name__ = "std"
+
 
 def aggregate_mean_std(
     df: pd.DataFrame,
@@ -78,14 +80,18 @@ def aggregate_mean_std(
     if groupby:
         grouped = df.groupby(list(groupby))
         agg = grouped[list(metrics)].agg(["mean", _std_ddof0])
-        agg.columns = [f"{metric}_{suffix}" for metric, suffix in agg.columns]
+        flat: list[str] = [
+            f"{metric}_{suffix}"
+            for metric, suffix in cast("Iterable[tuple[str, str]]", agg.columns)
+        ]
+        agg.columns = pd.Index(flat)
         return agg.reset_index()
 
     agg = df[list(metrics)].agg(["mean", _std_ddof0])
     data = {}
     for metric in metrics:
-        data[f"{metric}_mean"] = float(agg.at["mean", metric])
-        data[f"{metric}_std"] = float(agg.at["std", metric])
+        data[f"{metric}_mean"] = float(cast("SupportsFloat", agg.at["mean", metric]))
+        data[f"{metric}_std"] = float(cast("SupportsFloat", agg.at["std", metric]))
     return pd.DataFrame([data])
 
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ def save_json(obj: Any, path: Path | str, *, indent: int = 2) -> None:
 def timestamped_run_dir(base: Path | str = "results", name: str = "exp1") -> Path:
     """Create a new timestamped run directory and return its path."""
     base_path = ensure_dir(Path(base) / name)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     run_dir = ensure_dir(base_path / timestamp)
     ensure_dir(run_dir / "tables")
     ensure_dir(run_dir / "figures")

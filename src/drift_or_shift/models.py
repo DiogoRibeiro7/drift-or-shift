@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -37,6 +38,8 @@ def fit_logistic_regression(
     return model
 
 
-def predict_logits(model: LogisticRegression, X: Sequence[Sequence[float]]) -> np.ndarray:
+def predict_logits(
+    model: LogisticRegression, X: Sequence[Sequence[float]]
+) -> np.ndarray:
     """Return decision scores (logits) from the fitted model."""
     return model.decision_function(X)

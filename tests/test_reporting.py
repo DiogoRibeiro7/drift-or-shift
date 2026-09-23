@@ -88,7 +88,7 @@ def test_select_latest_summaries(tmp_path: Path) -> None:
 def test_detect_drift_alerts_reports_threshold_exceeded() -> None:
     summary = {
         "aggregated": {
-            "feature_max_ks": [(DRIFT_ALERT_THRESHOLDS["feature_max_ks"] + 0.1)],
+            "feature_max_ks": [DRIFT_ALERT_THRESHOLDS["feature_max_ks"] + 0.1],
             "feature_max_mean_diff": [0.0],
         }
     }

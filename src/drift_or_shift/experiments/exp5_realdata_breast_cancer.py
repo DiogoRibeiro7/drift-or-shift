@@ -12,10 +12,10 @@ from sklearn.model_selection import train_test_split
 
 from drift_or_shift import (
     DRIFT_FEATURE_METRICS,
-    ExperimentConfig,
-    PI_TRAIN,
     PI_TEST_GRID,
+    PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_logit_offset,
     feature_drift_metrics,
@@ -28,13 +28,15 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experiment 5: breast cancer label shift.")
+    parser = argparse.ArgumentParser(
+        description="Experiment 5: breast cancer label shift."
+    )
     parser.add_argument("--pi-train", type=float, default=PI_TRAIN)
     parser.add_argument("--pi-tests", type=float, nargs="+", default=list(PI_TEST_GRID))
     parser.add_argument("--seeds", type=int, nargs="+", default=list(SEEDS))
@@ -69,14 +71,20 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
             )
             scores = predict_logits(model, X_test)
             decisions_none = (scores >= threshold).astype(int)
-            risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
+            risk_none = risk_cost_sensitive(
+                y_test, decisions_none, config.c10, config.c01
+            )
 
             offset = logit_offset(config.pi_train, pi_test)
             shifted_scores = apply_logit_offset(scores, offset)
             decisions_offset = (shifted_scores >= threshold).astype(int)
-            risk_offset = risk_cost_sensitive(y_test, decisions_offset, config.c10, config.c01)
+            risk_offset = risk_cost_sensitive(
+                y_test, decisions_offset, config.c10, config.c01
+            )
 
-            _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
+            _, risk_oracle = oracle_threshold_min_risk(
+                y_test, scores, config.c10, config.c01
+            )
             drift = feature_drift_metrics(X_train, X_test)
             rows.append(
                 {

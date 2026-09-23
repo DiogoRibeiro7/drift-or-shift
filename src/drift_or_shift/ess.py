@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+
 def _validate_positive(value: float, name: str) -> None:
     if value <= 0:
         raise ValueError(f"{name} must be positive.")
@@ -15,7 +16,7 @@ def effective_sample_size(n: int, pi: float, alpha: float) -> float:
         raise ValueError("pi must lie in the open interval (0, 1).")
     _validate_positive(alpha, "alpha")
     numerator = (pi * alpha + (1 - pi)) ** 2
-    denominator = pi * alpha ** 2 + (1 - pi)
+    denominator = pi * alpha**2 + (1 - pi)
     return n * numerator / denominator
 
 

@@ -9,16 +9,16 @@ import numpy as np
 import pandas as pd
 
 from drift_or_shift import (
-    ExperimentConfig,
-    PI_TRAIN,
     PI_TEST_GRID,
+    PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     fit_logistic_regression,
     make_gaussian_binary,
     plot_auc_pr_vs_prevalence,
-    predict_logits,
     pr_auc,
+    predict_logits,
     roc_auc,
     save_json,
     save_table,
@@ -46,7 +46,13 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         mu1 = np.zeros(config.d)
         mu1[: min(5, config.d)] = 1.0
         X_train, y_train = make_gaussian_binary(
-            config.n_train, config.d, config.pi_train, mu0, mu1, sigma=1.0, rng=rng_train
+            config.n_train,
+            config.d,
+            config.pi_train,
+            mu0,
+            mu1,
+            sigma=1.0,
+            rng=rng_train,
         )
         model = fit_logistic_regression(X_train, y_train, rng=rng_train)
 

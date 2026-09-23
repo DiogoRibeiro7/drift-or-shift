@@ -8,9 +8,9 @@ from pathlib import Path
 import pandas as pd
 
 from drift_or_shift import (
-    ExperimentConfig,
     PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     ess_fraction,
     plot_ess_vs_alpha,
     save_json,
@@ -20,7 +20,9 @@ from drift_or_shift import (
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Experiment 3: ESS vs class weight alpha.")
+    parser = argparse.ArgumentParser(
+        description="Experiment 3: ESS vs class weight alpha."
+    )
     parser.add_argument("--n", type=int, default=1000)
     parser.add_argument("--pi", type=float, default=PI_TRAIN)
     parser.add_argument("--alphas", type=float, nargs="+", default=[1, 5, 10, 20, 50])
@@ -28,10 +30,17 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _run_experiment(config: ExperimentConfig, alphas: list[float], results_dir: Path) -> None:
+def _run_experiment(
+    config: ExperimentConfig, alphas: list[float], results_dir: Path
+) -> None:
     rows = []
     for alpha in alphas:
-        rows.append({"alpha": alpha, "ess_fraction": ess_fraction(config.n_train, config.pi_train, alpha)})
+        rows.append(
+            {
+                "alpha": alpha,
+                "ess_fraction": ess_fraction(config.n_train, config.pi_train, alpha),
+            }
+        )
 
     df = pd.DataFrame(rows)
     run_dir = timestamped_run_dir(results_dir, config.exp_name)

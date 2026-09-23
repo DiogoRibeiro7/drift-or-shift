@@ -13,10 +13,10 @@ from sklearn.preprocessing import StandardScaler
 from drift_or_shift import (
     DEFAULT_COSTS,
     DRIFT_FEATURE_METRICS,
-    ExperimentConfig,
-    PI_TRAIN,
     PI_TEST_GRID,
+    PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_logit_offset,
     feature_drift_metrics,
@@ -29,13 +29,15 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run Exp10: credit card fraud label shift.")
+    parser = argparse.ArgumentParser(
+        description="Run Exp10: credit card fraud label shift."
+    )
     parser.add_argument("--n-train", type=int, default=2000)
     parser.add_argument("--n-test", type=int, default=2000)
     parser.add_argument("--pi-train", type=float, default=PI_TRAIN)
@@ -62,7 +64,9 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
     for seed in config.seeds:
         rng = np.random.default_rng(seed)
         if required > X_full.shape[0]:
-            raise ValueError("Credit card dataset does not contain enough samples for the requested N")
+            raise ValueError(
+                "Credit card dataset does not contain enough samples for the requested N"
+            )
         subset = rng.choice(X_full.shape[0], size=required, replace=False)
         pool_X = X_full[subset].copy()
         pool_y = y_full[subset].copy()
@@ -76,7 +80,9 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
             pool_y[-1] = y_full[replacement]
         X_train_raw = pool_X[: config.n_train]
         y_train_raw = pool_y[: config.n_train]
-        X_train, y_train = resample_to_prevalence(X_train_raw, y_train_raw, config.pi_train, rng)
+        X_train, y_train = resample_to_prevalence(
+            X_train_raw, y_train_raw, config.pi_train, rng
+        )
         scaler = StandardScaler().fit(X_train)
         X_train_scaled = scaler.transform(X_train)
         model = fit_logistic_regression(X_train_scaled, y_train, rng=rng, max_iter=2000)
@@ -85,11 +91,15 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
         X_test_pool = pool_X[config.n_train :]
         y_test_pool = pool_y[config.n_train :]
         for pi_test in config.pi_tests:
-            X_test, y_test = resample_to_prevalence(X_test_pool, y_test_pool, pi_test, rng)
+            X_test, y_test = resample_to_prevalence(
+                X_test_pool, y_test_pool, pi_test, rng
+            )
             X_test_scaled = scaler.transform(X_test)
             scores = predict_logits(model, X_test_scaled)
             decisions_none = (scores >= threshold).astype(int)
-            risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
+            risk_none = risk_cost_sensitive(
+                y_test, decisions_none, config.c10, config.c01
+            )
 
             offset = logit_offset(config.pi_train, pi_test)
             scores_offset = apply_logit_offset(scores, offset)
@@ -97,7 +107,9 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
                 y_test, (scores_offset >= threshold).astype(int), config.c10, config.c01
             )
 
-            _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
+            _, risk_oracle = oracle_threshold_min_risk(
+                y_test, scores, config.c10, config.c01
+            )
             drift = feature_drift_metrics(X_train, X_test)
             rows.append(
                 {

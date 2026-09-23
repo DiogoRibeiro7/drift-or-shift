@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from collections.abc import Sequence
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
 
 import pandas as pd
 
@@ -26,18 +26,32 @@ def collect_summary_jsons(results_root: Path | str = "results") -> list[dict]:
     return entries
 
 
+def _as_utc(moment: datetime) -> datetime:
+    """Attach UTC to a naive datetime so old and new summaries stay comparable.
+
+    Summaries written before timestamps became timezone-aware carry naive ISO
+    strings; comparing those against aware ones raises ``TypeError``, which
+    would break ``select_latest_summaries`` on any mixed ``results/`` tree.
+    """
+    if moment.tzinfo is None:
+        return moment.replace(tzinfo=timezone.utc)
+    return moment
+
+
 def _summary_timestamp(payload: dict) -> datetime | None:
     """Return the timestamp associated with a summary (fallback to file mtime)."""
     iso_ts = payload.get("timestamp")
     if isinstance(iso_ts, str):
         try:
-            return datetime.fromisoformat(iso_ts)
+            return _as_utc(datetime.fromisoformat(iso_ts))
         except ValueError:
             pass
     fallback_path = payload.get("_path")
     if isinstance(fallback_path, str):
         try:
-            return datetime.fromtimestamp(Path(fallback_path).stat().st_mtime)
+            return datetime.fromtimestamp(
+                Path(fallback_path).stat().st_mtime, tz=timezone.utc
+            )
         except (OSError, ValueError):
             pass
     return None
@@ -56,7 +70,10 @@ def select_latest_summaries(summaries: Sequence[dict]) -> list[dict]:
         current = latest.get(name)
         if current is None or timestamp > current[0]:
             latest[name] = (timestamp, payload)
-    return [payload for name, payload in sorted((name, entry[1]) for name, entry in latest.items())]
+    return [
+        payload
+        for name, payload in sorted((name, entry[1]) for name, entry in latest.items())
+    ]
 
 
 DRIFT_ALERT_THRESHOLDS: dict[str, float] = {
@@ -191,7 +208,7 @@ def format_results_overview(summaries: Sequence[dict]) -> str:
                 lines.append(f"  - {metric}: {values}")
         lines.append(f"- raw summary path: {payload.get('_path')}")
         lines.append("")
-    lines.append(f"Generated on {datetime.now().isoformat()}")
+    lines.append(f"Generated on {datetime.now(timezone.utc).isoformat()}")
     return "\n".join(lines)
 
 

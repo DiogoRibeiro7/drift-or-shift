@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Sequence, cast
+from collections.abc import Sequence
+from typing import cast
 
 import numpy as np
 
@@ -19,7 +20,9 @@ def default_mu1(d: int) -> np.ndarray:
     return mu
 
 
-def concept_drift_mu1(mu1: Sequence[float], shift_dim: int = 5, delta: float = 0.5) -> np.ndarray:
+def concept_drift_mu1(
+    mu1: Sequence[float], shift_dim: int = 5, delta: float = 0.5
+) -> np.ndarray:
     """Return mu1 shifted along one dimension to simulate concept drift."""
     mu_arr = np.asarray(mu1, dtype=float)
     if shift_dim >= mu_arr.shape[0]:
@@ -85,7 +88,7 @@ def resample_to_prevalence(
     if X.shape[0] != y.shape[0]:
         raise ValueError("X and y must have the same number of samples.")
     n = len(y)
-    target_pos = int(round(pi_target * n))
+    target_pos = round(pi_target * n)
     target_neg = n - target_pos
     pos_idx = np.where(y == 1)[0]
     neg_idx = np.where(y == 0)[0]
@@ -119,9 +122,13 @@ def make_multimodal_binary(
     labels = rng.choice([0, 1], size=n, p=[1 - pi, pi])
     X = np.empty((n, d), dtype=float)
     if np.any(labels == 0):
-        X[labels == 0] = _sample_mixture(cov, neg_means, neg_weights, rng, size=np.sum(labels == 0))
+        X[labels == 0] = _sample_mixture(
+            cov, neg_means, neg_weights, rng, size=np.sum(labels == 0)
+        )
     if np.any(labels == 1):
-        X[labels == 1] = _sample_mixture(cov, pos_means, pos_weights, rng, size=np.sum(labels == 1))
+        X[labels == 1] = _sample_mixture(
+            cov, pos_means, pos_weights, rng, size=np.sum(labels == 1)
+        )
     return X, labels
 
 

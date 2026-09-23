@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """Watch `results/*/_summary.json` and refresh the dashboard/alerts when they change."""
 
 from __future__ import annotations
 
 import argparse
-import sys
 import subprocess
+import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict
 
 
 def _parse_args() -> argparse.Namespace:
@@ -18,7 +16,9 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--results-dir", type=Path, default=Path("results"))
     parser.add_argument("--poll-interval", type=float, default=30.0)
-    parser.add_argument("--drift-output", type=Path, default=Path("reports") / "drift_alerts.csv")
+    parser.add_argument(
+        "--drift-output", type=Path, default=Path("reports") / "drift_alerts.csv"
+    )
     parser.add_argument("--fail-on-alerts", action="store_true")
     parser.add_argument(
         "--once",
@@ -28,10 +28,10 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _snapshot(results_dir: Path) -> Dict[Path, float]:
+def _snapshot(results_dir: Path) -> dict[Path, float]:
     if not results_dir.exists():
         return {}
-    snapshot: Dict[Path, float] = {}
+    snapshot: dict[Path, float] = {}
     for summary in results_dir.rglob("*_summary.json"):
         try:
             snapshot[summary] = summary.stat().st_mtime
@@ -40,13 +40,10 @@ def _snapshot(results_dir: Path) -> Dict[Path, float]:
     return snapshot
 
 
-def _has_changes(previous: Dict[Path, float], current: Dict[Path, float]) -> bool:
+def _has_changes(previous: dict[Path, float], current: dict[Path, float]) -> bool:
     if previous.keys() != current.keys():
         return True
-    for path, mtime in current.items():
-        if previous.get(path) != mtime:
-            return True
-    return False
+    return any(previous.get(path) != mtime for path, mtime in current.items())
 
 
 def _run_pipeline(results_dir: Path, drift_output: Path, fail_on_alerts: bool) -> None:
@@ -69,7 +66,9 @@ def _run_pipeline(results_dir: Path, drift_output: Path, fail_on_alerts: bool) -
     ]
     if fail_on_alerts:
         aggregate_cmd.append("--fail-on-alerts")
-    print(f"[{datetime.now().isoformat()}] running drift_alerts + aggregate_results")
+    print(
+        f"[{datetime.now(timezone.utc).isoformat()}] running drift_alerts + aggregate_results"
+    )
     subprocess.run(drift_cmd, check=True)
     subprocess.run(aggregate_cmd, check=True)
 
@@ -91,7 +90,7 @@ def main() -> None:
         if args.once:
             break
         sleep = max(0.1, args.poll_interval)
-        print(f"[{datetime.now().isoformat()}] sleeping {sleep:.1f}s")
+        print(f"[{datetime.now(timezone.utc).isoformat()}] sleeping {sleep:.1f}s")
         time.sleep(sleep)
 
 

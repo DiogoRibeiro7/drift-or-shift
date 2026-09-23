@@ -7,8 +7,8 @@ import pytest
 
 from drift_or_shift.calibration import (
     apply_calibrator,
-    fit_isotonic_calibrator,
     find_best_temperature,
+    fit_isotonic_calibrator,
     temperature_scale,
 )
 

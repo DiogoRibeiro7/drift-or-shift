@@ -11,10 +11,10 @@ import pandas as pd
 from drift_or_shift import (
     DEFAULT_COSTS,
     DRIFT_FEATURE_METRICS,
-    ExperimentConfig,
-    PI_TRAIN,
     PI_TEST_GRID,
+    PI_TRAIN,
     SEEDS,
+    ExperimentConfig,
     aggregate_mean_std,
     apply_logit_offset,
     feature_drift_metrics,
@@ -27,8 +27,8 @@ from drift_or_shift import (
     risk_cost_sensitive,
     save_json,
     save_table,
-    timestamped_run_dir,
     threshold_from_costs,
+    timestamped_run_dir,
 )
 
 
@@ -46,7 +46,9 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _mixture_components(d: int) -> tuple[list[tuple[np.ndarray, float]], list[tuple[np.ndarray, float]]]:
+def _mixture_components(
+    d: int,
+) -> tuple[list[tuple[np.ndarray, float]], list[tuple[np.ndarray, float]]]:
     base = np.zeros(d)
     neg_shift = np.zeros(d)
     neg_shift[:3] = -1.0
@@ -89,7 +91,9 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
             )
             scores = predict_logits(model, X_test)
             decisions_none = (scores >= threshold).astype(int)
-            risk_none = risk_cost_sensitive(y_test, decisions_none, config.c10, config.c01)
+            risk_none = risk_cost_sensitive(
+                y_test, decisions_none, config.c10, config.c01
+            )
 
             offset = logit_offset(config.pi_train, pi_test)
             scores_offset = apply_logit_offset(scores, offset)
@@ -100,7 +104,9 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
                 config.c01,
             )
 
-            _, risk_oracle = oracle_threshold_min_risk(y_test, scores, config.c10, config.c01)
+            _, risk_oracle = oracle_threshold_min_risk(
+                y_test, scores, config.c10, config.c01
+            )
             drift = feature_drift_metrics(X_train, X_test)
             rows.append(
                 {
