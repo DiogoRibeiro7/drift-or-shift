@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `calibration._sigmoid` overflowed for large negative logits. The saturated
+  result was correct, but NumPy warned on the way there, and that noise can
+  mask a real warning. Evaluated piecewise now; the values are unchanged to
+  within `2.4e-38` and are the correctly rounded ones where they differ.
+
 - **Experiments 5 and 9 fitted an unconverged model, and their published
   numbers are re-derived.** Both fit logistic regression on raw, unscaled
   real-world features -- breast-cancer means span `0.004` to `880`, Covertype's
@@ -67,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   during comparison.
 
 ### Added
+
+- `RESULTS_DIGEST.md` documents all eleven experiments rather than five, with
+  measured figures and an observation for each, and
+  `tests/test_documented_results.py` enforces the four offline ones that were
+  previously undocumented (Exp6, Exp7, Exp8, Exp11) alongside Exp1-Exp5.
 
 - `caliblab.benchmark` takes an optional `calibration_holdout`, fitting the
   calibration map on a held-out slice of each fold's training data instead of

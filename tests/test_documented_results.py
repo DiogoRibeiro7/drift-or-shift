@@ -382,3 +382,224 @@ def test_exp5_matches_the_published_figures(exp5) -> None:
     assert none[0.5] == pytest.approx(0.0540, abs=TOL)
     assert offset[0.5] == pytest.approx(0.0421, abs=TOL)
     assert oracle[0.5] == pytest.approx(0.0351, abs=TOL)
+
+
+# ---------------------------------------------------------------------------
+# Experiment 6 -- calibration adds nothing under pure label shift
+# ---------------------------------------------------------------------------
+
+SYNTHETIC_ARGS = [
+    "--n-train",
+    "2000",
+    "--n-test",
+    "2000",
+    "--d",
+    "6",
+    "--pi-train",
+    "0.2",
+    "--seeds",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+]
+
+
+@pytest.fixture(scope="module")
+def exp6(tmp_path_factory, request):
+    monkeypatch = pytest.MonkeyPatch()
+    request.addfinalizer(monkeypatch.undo)
+    payload = _run(
+        monkeypatch,
+        tmp_path_factory.mktemp("exp6"),
+        "exp6_calibration_label_shift",
+        SYNTHETIC_ARGS,
+    )
+    return payload["aggregated"]
+
+
+def test_exp6_calibration_does_not_beat_the_plain_offset(exp6) -> None:
+    """A correctly specified model under label shift is already calibrated.
+
+    Temperature and isotonic scaling have no miscalibration to remove here, so
+    they can only add estimation variance. If this ever reverses, the synthetic
+    model has stopped being well specified.
+    """
+    offset = _by_prevalence(exp6, "risk_offset_mean")
+    temp = _by_prevalence(exp6, "risk_temp_offset_mean")
+    isotonic = _by_prevalence(exp6, "risk_isotonic_offset_mean")
+
+    for pi in offset:
+        assert temp[pi] >= offset[pi] - 2e-3, f"temperature beat the offset at {pi}"
+        assert isotonic[pi] >= offset[pi] - 2e-3, f"isotonic beat the offset at {pi}"
+
+
+def test_exp6_every_strategy_still_beats_no_correction(exp6) -> None:
+    none = _by_prevalence(exp6, "risk_none_mean")
+    for metric in ("risk_offset_mean", "risk_temp_offset_mean"):
+        corrected = _by_prevalence(exp6, metric)
+        for pi in none:
+            assert corrected[pi] <= none[pi] + 1e-9, f"{metric} lost at {pi}"
+
+
+def test_exp6_matches_the_published_figures(exp6) -> None:
+    assert _by_prevalence(exp6, "risk_offset_mean")[0.01] == pytest.approx(
+        0.0084, abs=TOL
+    )
+    assert _by_prevalence(exp6, "risk_temp_offset_mean")[0.01] == pytest.approx(
+        0.0085, abs=TOL
+    )
+    assert _by_prevalence(exp6, "risk_isotonic_offset_mean")[0.5] == pytest.approx(
+        0.1308, abs=TOL
+    )
+
+
+# ---------------------------------------------------------------------------
+# Experiment 7 -- the offset is inert for drift that is not label shift
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def exp7(tmp_path_factory, request):
+    monkeypatch = pytest.MonkeyPatch()
+    request.addfinalizer(monkeypatch.undo)
+    args = [
+        "--n-train",
+        "2000",
+        "--n-test",
+        "2000",
+        "--d",
+        "6",
+        "--pi-train",
+        "0.2",
+        "--seeds",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+    ]
+    payload = _run(
+        monkeypatch, tmp_path_factory.mktemp("exp7"), "exp7_drift_types", args
+    )
+    return payload["aggregated"]
+
+
+def test_exp7_offset_is_exactly_inert_for_every_drift_type(exp7) -> None:
+    """None of these scenarios moves the prior, so the offset has nothing to do.
+
+    This is the repository's central claim in its sharpest form: not "the offset
+    helps less", but "the offset changes nothing at all".
+    """
+    for i, drift_type in enumerate(exp7["drift_type"]):
+        assert exp7["risk_offset_mean"][i] == pytest.approx(
+            exp7["risk_none_mean"][i], abs=1e-12
+        ), f"offset was not inert for {drift_type}"
+
+
+def test_exp7_retraining_helps_where_information_survives(exp7) -> None:
+    by_type = dict(zip(exp7["drift_type"], range(len(exp7["drift_type"])), strict=True))
+
+    for drift_type in ("covariance_shift", "feature_shift"):
+        i = by_type[drift_type]
+        assert exp7["risk_retrain_mean"][i] < exp7["risk_none_mean"][i], drift_type
+
+
+def test_exp7_retraining_barely_helps_under_label_noise(exp7) -> None:
+    """Noise destroys information that refitting cannot restore."""
+    i = dict(zip(exp7["drift_type"], range(len(exp7["drift_type"])), strict=True))[
+        "label_noise"
+    ]
+    gain = exp7["risk_none_mean"][i] - exp7["risk_retrain_mean"][i]
+
+    assert 0 <= gain < 0.01, f"label-noise retraining gain was {gain:+.4f}"
+
+
+# ---------------------------------------------------------------------------
+# Experiment 8 -- multimodal class-conditionals
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def exp8(tmp_path_factory, request):
+    monkeypatch = pytest.MonkeyPatch()
+    request.addfinalizer(monkeypatch.undo)
+    payload = _run(
+        monkeypatch,
+        tmp_path_factory.mktemp("exp8"),
+        "exp8_multimodal_label_shift",
+        SYNTHETIC_ARGS,
+    )
+    return payload["aggregated"]
+
+
+def test_exp8_offset_works_without_unimodal_class_conditionals(exp8) -> None:
+    """The correction needs the conditionals fixed, not simple."""
+    none = _by_prevalence(exp8, "risk_none_mean")
+    offset = _by_prevalence(exp8, "risk_offset_mean")
+    oracle = _by_prevalence(exp8, "risk_oracle_mean")
+
+    for pi in none:
+        assert offset[pi] <= none[pi] + 1e-9, f"offset lost at pi_test={pi}"
+        assert oracle[pi] <= offset[pi] + 1e-9, f"oracle lost at pi_test={pi}"
+
+
+def test_exp8_matches_the_published_figures(exp8) -> None:
+    offset = _by_prevalence(exp8, "risk_offset_mean")
+
+    assert offset[0.01] == pytest.approx(0.0077, abs=TOL)
+    assert offset[0.5] == pytest.approx(0.1059, abs=TOL)
+
+
+# ---------------------------------------------------------------------------
+# Experiment 11 -- a real offset failure, unlike exp5's former one
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def exp11(tmp_path_factory, request):
+    monkeypatch = pytest.MonkeyPatch()
+    request.addfinalizer(monkeypatch.undo)
+    payload = _run(
+        monkeypatch,
+        tmp_path_factory.mktemp("exp11"),
+        "exp11_high_variance_medical",
+        SYNTHETIC_ARGS,
+    )
+    return payload["aggregated"]
+
+
+def test_exp11_offset_fails_at_the_largest_shift(exp11) -> None:
+    """A genuine failure, not an artifact.
+
+    Exp5 used to report the same shape of result and it turned out to be an
+    unconverged optimizer. Here the model converges and the experiment
+    deliberately gives each class its own covariance, so the label-shift
+    assumption really is violated and a single additive offset really is the
+    wrong correction.
+    """
+    none = _by_prevalence(exp11, "risk_none_mean")
+    offset = _by_prevalence(exp11, "risk_offset_mean")
+
+    assert offset[0.5] > none[0.5], "the designed offset failure no longer reproduces"
+
+
+def test_exp11_retraining_wins_everywhere(exp11) -> None:
+    none = _by_prevalence(exp11, "risk_none_mean")
+    retrain = _by_prevalence(exp11, "risk_retrain_mean")
+
+    for pi in none:
+        assert retrain[pi] <= none[pi] + 1e-9, f"retraining lost at pi_test={pi}"
+
+
+def test_exp11_matches_the_published_figures(exp11) -> None:
+    assert _by_prevalence(exp11, "risk_offset_mean")[0.01] == pytest.approx(
+        0.0165, abs=TOL
+    )
+    assert _by_prevalence(exp11, "risk_offset_mean")[0.5] == pytest.approx(
+        0.1332, abs=TOL
+    )
+    assert _by_prevalence(exp11, "risk_retrain_mean")[0.5] == pytest.approx(
+        0.1095, abs=TOL
+    )

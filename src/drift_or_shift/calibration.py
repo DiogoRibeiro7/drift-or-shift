@@ -10,8 +10,21 @@ from sklearn.isotonic import IsotonicRegression
 
 
 def _sigmoid(logits: np.ndarray) -> np.ndarray:
-    """Return probability after applying the logistic sigmoid function."""
-    return 1.0 / (1.0 + np.exp(-logits))
+    """Return probability after applying the logistic sigmoid function.
+
+    Evaluated piecewise. The direct form ``1 / (1 + exp(-x))`` overflows for
+    large negative x: the result saturates to the correct 0.0, but NumPy emits
+    an ``overflow encountered in exp`` warning on the way, which is noise that
+    can mask a real one. For x < 0 we use ``exp(x) / (1 + exp(x))`` instead,
+    where the exponential underflows harmlessly rather than overflowing.
+    """
+    x = np.asarray(logits, dtype=float)
+    out = np.empty_like(x)
+    positive = x >= 0
+    out[positive] = 1.0 / (1.0 + np.exp(-x[positive]))
+    exp_x = np.exp(x[~positive])
+    out[~positive] = exp_x / (1.0 + exp_x)
+    return out
 
 
 def temperature_scale(logits: ArrayLike, temperature: float) -> np.ndarray:
