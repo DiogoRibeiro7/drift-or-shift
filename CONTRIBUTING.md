@@ -28,23 +28,25 @@ together**, or local hooks and CI will disagree.
 
 ## Branching strategy
 
-- `main` — stable release branch; protected
-- `develop` — active integration branch
+- `main` — the trunk; always releasable, and protected
 - `feature/<desc>` — new capability
 - `bugfix/<desc>` — fixes
 - `release/<version>` — release preparation
 - `hotfix/<version>` — urgent fixes on top of `main`
 
+Branch from `main`, keep the branch short-lived, and merge back into `main`
+through a pull request. There is no long-running integration branch.
+
 ## Pull request process
 
-1. Branch from `develop` for features and fixes.
+1. Branch from `main` for features and fixes.
 2. Keep PRs small and focused, with a clear title and a linked issue
    (`Fixes #123`).
 3. Add or update tests for the behaviour you change. A bug fix without a
    regression test will usually be sent back.
 4. Add an entry to `CHANGELOG.md` under **Unreleased**.
 5. Ensure `make check` passes.
-6. Target `develop`; `main` takes release PRs only.
+6. Target `main`.
 
 ## Code style
 
