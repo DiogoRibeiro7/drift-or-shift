@@ -97,7 +97,9 @@ jobs:
         with:
           name: coverage-html-${{ matrix.os }}-py${{ matrix.python-version }}
           path: htmlcov/
-          if-no-files-found: error
+          # `warn`, not `error`: when pytest fails there is no htmlcov, and a
+          # hard failure here adds a second red step that hides the real one.
+          if-no-files-found: warn
 
   build:
     name: Build & install distribution

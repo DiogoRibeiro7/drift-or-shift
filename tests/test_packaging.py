@@ -8,13 +8,18 @@ subpackage shipped broken. These tests assert the contract the build must keep.
 from __future__ import annotations
 
 import importlib
+import sys
 from importlib import metadata
 from pathlib import Path
 
 import pytest
-import tomllib
 
 import drift_or_shift
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # tomllib entered the standard library in 3.11
+    import tomli as tomllib
 
 PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
