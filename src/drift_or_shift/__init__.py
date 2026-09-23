@@ -1,6 +1,6 @@
 """drift-or-shift: label shift and offset correction utilities."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.0a1"
 
 from .calibration import (
     apply_calibrator,

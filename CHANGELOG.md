@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0a1] - 2026-09-23
+
+First published artifact. It reserves the `drift-or-shift` name on PyPI and
+exercises the release pipeline end to end; the API is not yet stable.
+Everything below was previously listed as unreleased.
+
 ### Fixed
 
 - **Drift alerting never fired.** `detect_drift_alerts` looked up thresholds by
@@ -222,5 +228,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial research pipeline: synthetic label shift, offset correction, ESS,
   calibration, drift variants, and experiments 1–11.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/drift-or-shift/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/drift-or-shift/compare/v0.1.0a1...HEAD
+[0.1.0a1]: https://github.com/DiogoRibeiro7/drift-or-shift/releases/tag/v0.1.0a1
 [0.1.0]: https://github.com/DiogoRibeiro7/drift-or-shift/releases/tag/v0.1.0
