@@ -17,6 +17,7 @@ from drift_or_shift import (
     save_table,
     timestamped_run_dir,
 )
+from drift_or_shift.io_utils import save_figure
 
 
 def _parse_args() -> argparse.Namespace:
@@ -49,7 +50,7 @@ def _run_experiment(
 
     figure = plot_ess_vs_alpha(df["alpha"], df["ess_fraction"], title=config.exp_name)
     figure_path = run_dir / "figures" / f"{config.exp_name}.png"
-    figure.savefig(figure_path)
+    save_figure(figure, figure_path)
     figure.clf()
 
     summary_path = run_dir / f"{config.exp_name}_summary.json"

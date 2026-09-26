@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from dataexcept import DataLoadingError
 
 from drift_or_shift.reporting import (
     DRIFT_ALERT_THRESHOLDS,
@@ -134,8 +135,9 @@ def test_thresholds_default_when_no_path_is_given() -> None:
 
 
 def test_thresholds_raise_for_a_missing_file(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError, match="Threshold config not found"):
+    with pytest.raises(DataLoadingError, match=r"absent\.yaml") as error:
         load_drift_alert_thresholds(tmp_path / "absent.yaml")
+    assert isinstance(error.value.original, FileNotFoundError)
 
 
 def test_thresholds_override_defaults_without_dropping_them(tmp_path: Path) -> None:

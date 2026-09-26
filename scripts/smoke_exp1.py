@@ -26,6 +26,7 @@ from drift_or_shift import (
     threshold_from_costs,
     timestamped_run_dir,
 )
+from drift_or_shift.io_utils import save_figure
 
 
 def _parse_args() -> argparse.Namespace:
@@ -103,7 +104,7 @@ def _run_smoke(config: ExperimentConfig, results_dir: Path) -> None:
         title=config.exp_name,
     )
     figure_path = run_dir / "figures" / f"{config.exp_name}.png"
-    figure.savefig(figure_path)
+    save_figure(figure, figure_path)
     figure.clf()
 
     summary_path = run_dir / f"{config.exp_name}_summary.json"

@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import yaml
 from sklearn.datasets import load_breast_cancer, load_digits, load_iris
 
 from caliblab import benchmark
+from drift_or_shift.io_utils import ensure_dir, load_yaml, save_table
 
 _DATASETS: dict[str, Any] = {
     "breast_cancer": load_breast_cancer,
@@ -21,8 +21,7 @@ _DATASETS: dict[str, Any] = {
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with Path(path).open(encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+    return load_yaml(path)
 
 
 def _select_dataset(spec: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
@@ -52,10 +51,10 @@ def run_benchmark(config_path: Path | str) -> Path:
         cv_params=config["cv"],
     )
     raw_dir = Path(config["outputs"]["raw"])
-    raw_dir.mkdir(parents=True, exist_ok=True)
+    ensure_dir(raw_dir)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     out_path = raw_dir / f"benchmark_{timestamp}.csv"
-    result.to_csv(out_path, index=False)
+    save_table(result, out_path)
     return out_path
 
 

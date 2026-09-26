@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from dataexcept import DataLoadingError
 
 
 def _run_main(monkeypatch, module_name: str, argv: list[str]):
@@ -104,7 +105,7 @@ def test_drift_alerts_writes_a_csv_when_thresholds_are_exceeded(
 def test_drift_alerts_propagates_a_missing_threshold_file(
     monkeypatch, tmp_path, results_tree
 ) -> None:
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(DataLoadingError):
         _run_main(
             monkeypatch,
             "drift_alerts",

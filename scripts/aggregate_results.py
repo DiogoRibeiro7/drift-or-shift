@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-import pandas as pd
+from dataexcept import DataLoadingError
 
+from drift_or_shift.io_utils import ensure_dir, load_table, save_figure, save_text
 from drift_or_shift.reporting import (
     collect_summary_jsons,
     detect_drift_alerts,
@@ -84,8 +85,8 @@ def _best_risk_metric(summary: dict) -> tuple[str | None, float | None]:
     if not table_file.exists():
         return None, None
     try:
-        df = pd.read_csv(table_file)
-    except (OSError, ValueError):
+        df = load_table(table_file)
+    except (DataLoadingError, ValueError):
         return None, None
     risk_cols = [
         col for col in df.columns if col.startswith("risk_") and col.endswith("_mean")
@@ -122,7 +123,7 @@ def _collect_best_records(summaries: Sequence[dict]) -> list[dict[str, Any]]:
 
 
 def _plot_best_risks(records: Sequence[dict[str, Any]], path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_dir(path.parent)
     experiments = [rec["exp_name"] for rec in records]
     values = [rec["value"] for rec in records]
     labels = [_pretty_metric_name(rec["metric"]) for rec in records]
@@ -141,7 +142,7 @@ def _plot_best_risks(records: Sequence[dict[str, Any]], path: Path) -> None:
             fontsize=8,
         )
     fig.tight_layout()
-    fig.savefig(path)
+    save_figure(fig, path)
     plt.close(fig)
 
 
@@ -204,8 +205,7 @@ def main() -> None:
         records,
         figure_path if records else None,
     )
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(dashboard_text, encoding="utf-8")
+    save_text(dashboard_text, output_path)
     print(f"dashboard written to {output_path}")
 
     if records:
