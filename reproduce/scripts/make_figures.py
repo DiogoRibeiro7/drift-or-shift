@@ -8,20 +8,20 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import yaml
 from sklearn.calibration import calibration_curve
+
+from drift_or_shift.io_utils import ensure_dir, load_table, load_yaml, save_figure
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with Path(path).open(encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+    return load_yaml(path)
 
 
 def _load_raw_data(raw_dir: Path) -> pd.DataFrame:
     files = sorted(raw_dir.glob("*.csv"))
     if not files:
         raise FileNotFoundError(f"No raw CSVs found in {raw_dir}")
-    return pd.concat((pd.read_csv(path) for path in files), ignore_index=True)
+    return pd.concat((load_table(path) for path in files), ignore_index=True)
 
 
 def _parse_method(method: str) -> tuple[str, str]:
@@ -35,7 +35,7 @@ def run_make_figures(config_path: Path | str) -> Path:
     config = _load_config(config_path)
     df = _load_raw_data(Path(config["outputs"]["raw"]))
     figure_dir = Path(config["outputs"]["figures"])
-    figure_dir.mkdir(parents=True, exist_ok=True)
+    ensure_dir(figure_dir)
     methods = config.get("figures", {}).get("reliability", {}).get("methods")
     if not methods:
         combos = sorted(
@@ -71,7 +71,7 @@ def run_make_figures(config_path: Path | str) -> Path:
     ax.grid(True, linestyle=":")
     fig.tight_layout()
     out_path = figure_dir / "reliability.png"
-    fig.savefig(out_path)
+    save_figure(fig, out_path)
     plt.close(fig)
     return out_path
 

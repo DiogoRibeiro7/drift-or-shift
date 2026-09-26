@@ -8,6 +8,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
+from dataexcept import DataLoadingError
+
+from .io_utils import save_table, save_text
 
 
 def collect_summary_jsons(results_root: Path | str = "results") -> list[dict]:
@@ -19,7 +22,7 @@ def collect_summary_jsons(results_root: Path | str = "results") -> list[dict]:
     for summary in sorted(root_path.rglob("*_summary.json")):
         try:
             data = json.loads(summary.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except (json.JSONDecodeError, OSError, UnicodeError):
             continue
         data["_path"] = str(summary)
         entries.append(data)
@@ -152,17 +155,24 @@ def load_drift_alert_thresholds(path: Path | str | None = None) -> dict[str, flo
     if path is None:
         return DRIFT_ALERT_THRESHOLDS
     source = Path(path)
-    if not source.exists():
-        raise FileNotFoundError(f"Threshold config not found: {source}")
-    text = source.read_text(encoding="utf-8")
+    try:
+        text = source.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise DataLoadingError(str(source), exc) from exc
     try:
         import yaml
 
-        thresholds = yaml.safe_load(text)
+        try:
+            thresholds = yaml.safe_load(text)
+        except yaml.YAMLError as exc:
+            raise DataLoadingError(str(source), exc) from exc
     except ImportError:
         import json
 
-        thresholds = json.loads(text)
+        try:
+            thresholds = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise DataLoadingError(str(source), exc) from exc
 
     if not isinstance(thresholds, dict):
         raise ValueError("Threshold config must be a mapping")
@@ -186,8 +196,7 @@ def write_drift_alerts(
     df = pd.DataFrame(records)
     if df.empty:
         return path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(path, index=False)
+    save_table(df, path)
     return path
 
 
@@ -225,6 +234,5 @@ def write_results_overview(
 ) -> Path:
     """Write the overview text to disk and return the path."""
     path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(format_results_overview(summaries), encoding="utf-8")
+    save_text(format_results_overview(summaries), path)
     return path

@@ -33,6 +33,7 @@ from drift_or_shift import (
     threshold_from_costs,
     timestamped_run_dir,
 )
+from drift_or_shift.io_utils import ensure_dir, save_figure
 
 
 def _parse_args() -> argparse.Namespace:
@@ -89,8 +90,8 @@ def _plot_drift_risks(summary: pd.DataFrame, path: Path) -> None:
     ax.set_xticklabels(labels, rotation=25, ha="right")
     ax.legend()
     fig.tight_layout()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path)
+    ensure_dir(path.parent)
+    save_figure(fig, path)
     plt.close(fig)
 
 

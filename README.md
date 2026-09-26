@@ -41,7 +41,7 @@ Runtime install only:
 python -m pip install .
 ```
 
-Requires Python 3.10+. This installs the `drift_or_shift` package, the
+Requires Python 3.10–3.14. This installs the `drift_or_shift` package, the
 `drift_shift_pipeline` compatibility alias, the `caliblab` calibration
 benchmarking helpers, and the eleven `dos-expN` console scripts.
 
@@ -140,6 +140,13 @@ make help       # all targets
 CI runs the suite on Python 3.10–3.13 on Linux, plus Windows and macOS spot
 checks, and verifies that the built wheel installs and runs in a clean
 environment.
+
+Artifact and configuration I/O uses DataExcept: failed CSV/YAML reads raise
+`DataLoadingError` with the source path and original exception; failed CSV,
+JSON, text, directory, and figure writes raise `FileWriteError` with the
+destination path and original exception. Invalid experiment settings and
+non-numeric drift inputs keep their validation errors. The dashboard continues
+to skip unreadable summaries and optional experiment tables.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branching and PR conventions, and
 [CHANGELOG.md](CHANGELOG.md) for release history.

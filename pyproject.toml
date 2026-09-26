@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "drift-or-shift"
 description = "Label shift vs. concept drift: Bayes-optimal offset correction, calibration, and drift diagnostics."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Diogo Ribeiro", email = "hansolo.dj@gmail.com" }]
@@ -39,6 +39,7 @@ dependencies = [
     "pandas>=1.5",
     "matplotlib>=3.6",
     "pyyaml>=6.0",
+    "dataexcept>=1.7,<2",
 ]
 
 [project.optional-dependencies]

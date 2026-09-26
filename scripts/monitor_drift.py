@@ -6,14 +6,14 @@ import argparse
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 from drift_or_shift.drift_monitor import feature_drift_summary, univariate_feature_stats
+from drift_or_shift.io_utils import load_table
 from drift_or_shift.reporting import DRIFT_ALERT_THRESHOLDS
 
 
 def _load_features(path: Path) -> np.ndarray:
-    df = pd.read_csv(path)
+    df = load_table(path)
     if df.empty:
         raise ValueError(f"input file {path} is empty")
     numeric = df.select_dtypes(include=[np.number])

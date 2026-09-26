@@ -147,6 +147,13 @@ Run directories and summary timestamps are UTC and timezone-aware.
 `select_latest_summaries` normalises older naive timestamps, so a results tree
 containing both still sorts.
 
+File read/parse failures in `io_utils.load_table`, `io_utils.load_yaml`, and
+`reporting.load_drift_alert_thresholds` raise DataExcept's `DataLoadingError`.
+Artifact write failures raise its `FileWriteError`. Both retain the affected
+path and original exception (`.source`/`.path` and `.original`); business
+validation errors are unchanged. Summary collection skips unreadable or
+malformed JSON so a single interrupted run does not stop dashboard generation.
+
 ## Plotting
 
 | Function | Purpose |

@@ -33,6 +33,7 @@ from drift_or_shift import (
     threshold_from_costs,
     timestamped_run_dir,
 )
+from drift_or_shift.io_utils import save_figure
 
 
 def _prob_to_logit(probs: np.ndarray, eps: float = 1e-12) -> np.ndarray:
@@ -151,7 +152,7 @@ def _run_experiment(config: ExperimentConfig, results_dir: Path) -> None:
     )
     ax.legend()
     figure_path = run_dir / "figures" / f"{config.exp_name}.png"
-    figure.savefig(figure_path)
+    save_figure(figure, figure_path)
     figure.clf()
 
     summary_path = run_dir / f"{config.exp_name}_summary.json"

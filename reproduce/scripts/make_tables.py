@@ -7,13 +7,13 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import yaml
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
+
+from drift_or_shift.io_utils import ensure_dir, load_table, load_yaml, save_table
 
 
 def _load_config(path: Path | str) -> dict[str, Any]:
-    with Path(path).open(encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+    return load_yaml(path)
 
 
 def _std_ddof0(series: pd.Series) -> float:
@@ -24,7 +24,7 @@ def _load_raw_data(raw_dir: Path) -> pd.DataFrame:
     files = sorted(raw_dir.glob("*.csv"))
     if not files:
         raise FileNotFoundError(f"No raw CSVs found in {raw_dir}")
-    return pd.concat((pd.read_csv(path) for path in files), ignore_index=True)
+    return pd.concat((load_table(path) for path in files), ignore_index=True)
 
 
 def run_make_tables(config_path: Path | str) -> Path:
@@ -63,9 +63,9 @@ def run_make_tables(config_path: Path | str) -> Path:
     )
 
     tables_dir = Path(config["outputs"]["tables"])
-    tables_dir.mkdir(parents=True, exist_ok=True)
+    ensure_dir(tables_dir)
     out_path = tables_dir / "summary.csv"
-    summary.to_csv(out_path, index=False)
+    save_table(summary, out_path)
     return out_path
 
 
