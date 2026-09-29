@@ -55,7 +55,7 @@ dev = [
     "pre-commit==4.6.2",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
-    "ruff==0.16.8",
+    "ruff==0.16.9",
     # tomllib is stdlib from 3.11; 3.10 needs the backport.
     "tomli==2.4.1; python_version < '3.11'",
     "types-PyYAML==6.0.12.20260906",
